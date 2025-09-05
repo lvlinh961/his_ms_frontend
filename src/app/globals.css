@@ -1,0 +1,245 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted-custom: 215 16% 47%;
+    --accent: 210 40% 96.1%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --selected-user-foreground: 198.6 88.7% 48.4%;
+    --custom-bg-muted: 210 19% 84%;
+
+    --text-size: 55rem;
+    --color-custom-1: 210 40% 98%;
+    --color-custom-2: 210 40% 96.1%;
+    --color-custom-3: 210 42% 95.1%;
+    --text-color: 222.2 84% 4.9%;
+    --selected-patient: 198.6 88.7% 48.4%;
+    --color-button: 222.2 84% 4.9%;
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+  .dark {
+    --background: 222.2 84% 4.9%;
+    --foreground: 210 40% 98%;
+    --card: 222.2 84% 4.9%;
+    --card-foreground: 210 40% 98%;
+    --popover: 222.2 84% 4.9%;
+    --popover-foreground: 210 40% 98%;
+    --primary: 210 40% 98%;
+    --primary-foreground: 222.2 47.4% 11.2%;
+    --secondary: 217.2 32.6% 17.5%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 217.2 32.6% 17.5%;
+    --muted-foreground: 215 20.2% 65.1%;
+    --muted-custom: 215 16% 47%;
+    --accent: 217.2 32.6% 17.5%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 217.2 32.6% 17.5%;
+    --input: 217.2 32.6% 17.5%;
+    --ring: 212.7 26.8% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+    --selected-user-foreground: 198.6 88.7% 48.4%;
+    --custom-grey-foreground: 199 3% 75% 1;
+    --custom-bg-muted: 217 2% 66%;
+    --text-size: 55rem;
+    --color-custom-1: 222.2 47.4% 11.2%;
+    --color-custom-2: 217.2 32.6% 17.5%;
+    --color-custom-3: 217.2 32.6% 17.5%;
+
+    --text-color: 0 0 100%;
+    --selected-patient: 198.6 98.7% 48.4%;
+    --color-button: 210 40% 98%;
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .theme-blue {
+    --background: 0 0% 100%;
+    --muted: 212 74% 85%;
+    /* --foreground: 221 83 53%;  */
+    --input: 211 79% 89%;
+    --destructive: 0 84.2% 60.2%;
+
+    --color-custom-1: 224.44 64.29% 32.94%;
+    --color-custom-2: 221.21 83.19% 53.33%;
+    --color-custom-3: 211 79% 89%;
+    --text-color: 0 0 100%;
+    --selected-user-foreground: 224.44 64.29% 32.94%;
+    --selected-patient: 224.44 64.29% 32.94%;
+    --color-button: 224.44 64.29% 32.94%;
+  }
+
+  .theme-green {
+    --background: 0 0% 100%;
+    --muted: 143 80% 88%;
+    --input: 141.71 57.82% 81.68%;
+
+    --color-custom-1: 162.93 93.55% 24.31%;
+    --color-custom-2: 161.38 93.55% 30.39%;
+    --color-custom-3: 149.27 80.39% 90%;
+    --selected-user-foreground: 162.93 93.55% 24.31%;
+    --selected-patient: 162.93 93.55% 24.31%;
+    --text-color: 0 0 100%;
+    --color-button: 162.93 93.55% 24.31%;
+  }
+
+  .theme-orange {
+    --input: 31 83% 82%;
+    --muted: 31 83% 82%;
+
+    --color-custom-1: 20.54 90.24% 48.24%;
+    --color-custom-2: 24.58deg 94.98% 53.14%;
+    --color-custom-3: 31 83% 82%;
+    --selected-user-foreground: 20.54 90.24% 48.24%;
+    --selected-patient: 20.54 90.24% 48.24%;
+    --text-color: 0 0 100%;
+    --color-button: 20.54 90.24% 48.24%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+@layer utilities {
+  input,
+  textarea {
+    @apply px-1 !important;
+  }
+  .select-trigger {
+    @apply p-1 !important;
+  }
+  input[type="date"]::-webkit-inner-spin-button,
+  input[type="date"]::-webkit-calendar-picker-indicator {
+    @apply hidden;
+    -webkit-appearance: none;
+  }
+}
+
+.DayPicker-Caption select {
+  @apply border border-input rounded-md px-2 py-1 text-sm bg-background text-foreground;
+}
+
+.DayPicker-Caption select:first-child {
+  margin-right: 0.5rem;
+}
+
+.dot-line {
+  @apply border-b border-dotted border-gray-800;
+}
+
+.none-line {
+  @apply border-white;
+}
+
+.bg-dot-line-bk {
+  border: none;
+  background-image: repeating-linear-gradient(
+    to bottom,
+    gray 0px,
+    gray 2px,
+    transparent 1px,
+    transparent 4px
+  );
+  background-position: 0 2px;
+  background-repeat: repeat;
+  background-size: auto 2px;
+}
+
+.bg-dot-line1 {
+  background-image: repeating-linear-gradient(
+    to bottom,
+    transparent 0px,
+    transparent 22px,
+    rgba(0, 0, 0, 0.8) 22px,
+    transparent 23px
+  );
+  /* Nét chấm ngang */
+  background-size: 100% 23px;
+  position: relative;
+}
+
+.bg-dot-line1::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image: radial-gradient(circle, black 0.5px, transparent 0.5px);
+  background-size: 4px 23px; /* 4px là khoảng cách dot, 23px là khoảng cách dòng */
+  pointer-events: none;
+}
+
+/* Dòng chấm rời rạc (multi-line) */
+.bg-dot-line {
+  background-image: radial-gradient(circle, #000 0.6px, transparent 1px);
+  background-repeat: repeat;
+  background-position-y: 2px; /* Đặt chấm ở đáy */
+  background-size: 4px 24px; /* Khoảng cách ngang chấm */
+  border-bottom: 1px dotted transparent; /* Giữ chiều cao cho in */
+}
+
+.dob-container {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.dob-box {
+  width: 20px;
+  height: 20px;
+  border: 1px solid black;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  line-height: 1;
+}
