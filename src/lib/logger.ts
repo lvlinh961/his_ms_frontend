@@ -1,4 +1,4 @@
-import envConfig from "@/config";
+import { getConfig } from "@/config";
 
 type LogLevel = "debug" | "info" | "warn" | "error";
 
@@ -6,8 +6,9 @@ class Logger {
   private enabled: boolean;
   private prefix: string;
 
-  constructor(enabled: boolean = true, prefix: string = "[Logger]") {
-    this.enabled = enabled;
+  constructor(prefix: string = "[Logger]") {
+    const { NEXT_PUBLIC_ENABLE_LOGGING } = getConfig();
+    this.enabled = NEXT_PUBLIC_ENABLE_LOGGING === "true";
     this.prefix = prefix;
   }
 
@@ -55,6 +56,4 @@ class Logger {
   }
 }
 
-export const logger = new Logger(
-  envConfig.NEXT_PUBLIC_ENABLE_LOGGING === "true"
-);
+export const logger = new Logger();

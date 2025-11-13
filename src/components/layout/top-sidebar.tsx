@@ -1,6 +1,6 @@
 "use client";
 import * as React from "react";
-import { navItems } from "@/constants/data";
+import { navItems } from "@/constants/navItems";
 import { NavItem } from "@/types";
 import { useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
@@ -8,6 +8,9 @@ import { ChevronRightIcon } from "@radix-ui/react-icons";
 import { ChevronDown } from "lucide-react";
 import { usePathname } from "next/navigation";
 import { usePermission } from "@/hooks/usePermission";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
+import { useState } from "react";
+import { DialogDescription } from "@radix-ui/react-dialog";
 
 const classWidthContent = 56; // w-56	width: 14rem; /* 224px */
 
@@ -20,9 +23,17 @@ export function TopSidebar() {
 export function ListItem({
   item,
   className,
+  setNavPopupContent,
+  setNavPopupTitle,
+  setOpenNavComponent,
 }: {
   item: NavItem;
   className?: string;
+  setNavPopupContent: React.Dispatch<
+    React.SetStateAction<React.ComponentType | null>
+  >;
+  setNavPopupTitle: (title: string) => void;
+  setOpenNavComponent: (open: boolean) => void;
 }) {
   const { title, href, childrens, level } = item;
   const router = useRouter();
@@ -33,6 +44,16 @@ export function ListItem({
 
     router.push(href);
     router.refresh();
+  };
+
+  const handleClick = () => {
+    if (item.component) {
+      setNavPopupContent(() => item.component!);
+      setNavPopupTitle(item.label || item.title);
+      setOpenNavComponent(true);
+    } else {
+      handleRedirect(href || "");
+    }
   };
 
   const renderChevronIcon = () => {
@@ -83,11 +104,12 @@ export function ListItem({
     >
       <div
         className="inline-flex items-center w-full p-3 hover:rounded hover:shadow hover:bg-[hsl(var(--color-custom-2))] text-[hsl(var(--text-color))]"
-        onClick={() => handleRedirect(href || "")}
+        onClick={handleClick}
       >
         <div className="w-full">{title}</div>
         {renderChevronIcon()}
       </div>
+
       {Array.isArray(childrens) && (
         <Menu
           key={item.href}
@@ -114,24 +136,42 @@ export function Menu({
   className?: string;
   itemKey?: any;
 }) {
+  const [navPopupContent, setNavPopupContent] =
+    useState<React.ComponentType | null>(null);
+  const [navPopupTitle, setNavPopupTitle] = useState<string>("");
+  const [openNavCompoment, setOpenNavComponent] = useState<boolean>(false);
   const { hasPermission } = usePermission();
 
   return (
-    <ul className={cn(className)}>
-      {list.map((item: NavItem) => {
-        if (hasPermission(item?.permission)) {
-          return (
-            <ListItem
-              key={item.title || item.label}
-              item={item}
-              className={cn(
-                "text-sm hover:bg-[hsl(var(--color-custom-2))] hover:cursor-pointer"
-              )}
-            />
-          );
-        }
-        return null;
-      })}
-    </ul>
+    <>
+      <ul className={cn(className)}>
+        {list.map((item: NavItem) => {
+          if (hasPermission(item?.permission)) {
+            return (
+              <ListItem
+                key={item.title || item.label}
+                item={item}
+                className={cn(
+                  "text-sm hover:bg-[hsl(var(--color-custom-2))] hover:cursor-pointer"
+                )}
+                setNavPopupContent={setNavPopupContent}
+                setNavPopupTitle={setNavPopupTitle}
+                setOpenNavComponent={setOpenNavComponent}
+              />
+            );
+          }
+          return null;
+        })}
+      </ul>
+      <Dialog open={openNavCompoment} onOpenChange={setOpenNavComponent}>
+        <DialogContent className="w-[90vw] max-w-4xl max-h-[90vh] overflow-y-hidden">
+          <DialogHeader>
+            <DialogTitle>{navPopupTitle}</DialogTitle>
+            <DialogDescription />
+          </DialogHeader>
+          {navPopupContent && React.createElement(navPopupContent)}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

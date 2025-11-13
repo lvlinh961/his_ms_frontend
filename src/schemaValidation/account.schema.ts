@@ -7,6 +7,18 @@ export const AccountRes = z
       firstName: z.string(),
       lastName: z.string(),
       scope: z.string(),
+      tenant: z
+        .object({
+          id: z.string(),
+          address: z.string(),
+          email: z.string(),
+          name: z.string(),
+          phone: z.string(),
+          code: z.string(),
+          disabled: z.boolean().default(false),
+          createdAt: z.date(),
+        })
+        .optional(),
     }),
     message: z.string(),
   })

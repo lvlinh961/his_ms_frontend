@@ -33,6 +33,7 @@ export default function DateTimePickerWithPopover({
   placeholder = "Chọn ngày & giờ",
 }: Props) {
   const [date, setDate] = useState<Date>(value ?? new Date());
+  const [datetimePickerOpen, setDatetimePickerOpen] = useState(false);
 
   useEffect(() => {
     if (value) setDate(value);
@@ -61,7 +62,11 @@ export default function DateTimePickerWithPopover({
   };
 
   return (
-    <Popover>
+    <Popover
+      open={datetimePickerOpen}
+      onOpenChange={setDatetimePickerOpen}
+      modal={true}
+    >
       <PopoverTrigger asChild>
         <Button
           variant="outline"
@@ -127,6 +132,7 @@ export default function DateTimePickerWithPopover({
               );
               setDate(updated);
               onChange(updated);
+              setDatetimePickerOpen(false);
             }
           }}
           month={date}

@@ -42,8 +42,6 @@ export default function Page({ params }: { params: { id: string } }) {
       const res =
         await emrApiRequest.getDermatologyEmrPrintData(dermatologyEmrId);
 
-      logger.debug("Emr print data: ", res);
-
       if (res?.payload.result) {
         setData(res.payload.result);
       }

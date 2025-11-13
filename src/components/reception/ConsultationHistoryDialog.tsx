@@ -66,6 +66,10 @@ export default function ConsultationHistoryDialog({
   };
 
   const getPrescriptionInfo = async (idx: number, prescriptionId: string) => {
+    if (!prescriptionId) {
+      return false;
+    }
+    
     setActiveIdx(idx);
     setLoading(true);
 

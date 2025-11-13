@@ -39,6 +39,10 @@ COPY --from=BUILD /app/next.config.js ./
 COPY --from=BUILD /app/.next/standalone ./
 COPY --from=BUILD /app/.next/static ./.next/static
 
+# Add entrypoint
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
 EXPOSE 3000
 
 CMD ["node", "server.js"]

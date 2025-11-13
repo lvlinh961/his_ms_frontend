@@ -1,4 +1,5 @@
 import { z } from "zod";
+import fs from "fs";
 
 // Runtime config type
 type RuntimeConfig = {
@@ -14,10 +15,12 @@ const configSchema = z.object({
 });
 
 export function getConfig() {
-  // Load runtime config (client side only)
+  // Load server config (server side only)
   let runtimeConfig: RuntimeConfig = {};
-  if (typeof window !== "undefined" && (window as any).RUNTIME_CONFIG) {
-    runtimeConfig = (window as any).RUNTIME_CONFIG;
+  if (fs.existsSync("/app/runtime-config.json")) {
+    runtimeConfig = JSON.parse(
+      fs.readFileSync("/app/runtime-config.json", "utf-8")
+    );
   }
 
   const configProject = configSchema.safeParse({

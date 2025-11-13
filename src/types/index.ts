@@ -5,6 +5,7 @@ import { FormFieldType } from "@/constants/enum";
 export interface NavItem {
   title: string;
   href?: string;
+  component?: React.ComponentType;
   disabled?: boolean;
   external?: boolean;
   icon?: keyof typeof Icons;
@@ -107,7 +108,7 @@ export interface CustomFormFieldProps {
 }
 
 export interface Customer {
-  patientId: number;
+  patientId: string;
   patientCode: string;
   patientName: string;
   address: string;
@@ -131,6 +132,9 @@ export interface CustomFormFieldProps {
   dateFormat?: string;
   showTimeSelect?: boolean;
   value?: string;
+  direction?: "row" | "col";
+  labelWidth?: string;
+  fieldWidth?: string;
   onChangeCustom?: (event?: any) => void;
 }
 

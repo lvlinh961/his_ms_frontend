@@ -59,6 +59,7 @@ export default function UserAuthForm() {
         firstName: result.payload.result.firstname,
         lastName: result.payload.result.lastname,
         scope: result.payload.result.scope,
+        tenant: result.payload.result.tenant,
       };
 
       setUser(account);

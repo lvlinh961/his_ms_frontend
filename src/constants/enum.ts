@@ -5,6 +5,9 @@ export enum FormFieldType {
   RADIO = "Radio",
   SELECT = "select",
   DATE_PICKER = "datePicker",
+  DATE_PICKER_NEW = "datePicker_new",
+  DATETIME_PICKER = "datetimePicker",
+  NUMBER = "number",
 }
 
 // Loại icd chính hoặc là icd kèm theo

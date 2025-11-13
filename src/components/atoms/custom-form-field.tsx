@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { FormFieldType } from "@/constants/enum";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -28,6 +28,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import DatePickerWithPopover from "./DatePickerWithPopover";
+import DateTimePickerWithPopover from "./DateTimePickerWithPopover";
 
 const RenderInput = ({
   field,
@@ -36,14 +38,14 @@ const RenderInput = ({
 }: {
   field: any;
   props: CustomFormFieldProps;
-  onChangeCustom?: () => void;
+  onChangeCustom?: (value: any) => void;
 }) => {
   const [date, setDate] = React.useState<Date>();
 
   switch (props.fieldType) {
     case FormFieldType.INPUT:
       return (
-        <div className="flex">
+        <div className={cn("flex ", props.fieldWidth || "flex-1")}>
           <FormControl>
             <Input
               type={
@@ -58,6 +60,27 @@ const RenderInput = ({
           </FormControl>
         </div>
       );
+    case FormFieldType.NUMBER:
+      return (
+        <div className={cn("flex", props.fieldWidth || "flex-1")}>
+          <FormControl>
+            <Input
+              type="number"
+              placeholder={props?.placeholder || ""}
+              disabled={props?.disabled || false}
+              className={props?.fontSize || ""}
+              inputMode="numeric"
+              value={field.value ?? ""}
+              onChange={(e) => {
+                const value =
+                  e.target.value === "" ? undefined : Number(e.target.value);
+                field.onChange(value);
+                if (onChangeCustom) onChangeCustom;
+              }}
+            />
+          </FormControl>
+        </div>
+      );
     case FormFieldType.TEXTAREA:
       return (
         <FormControl>
@@ -65,7 +88,7 @@ const RenderInput = ({
             placeholder={props.placeholder}
             {...field}
             disabled={props?.disabled || false}
-            className={props?.fontSize || ""}
+            className={cn(props?.fontSize || "", "flex-1")}
           />
         </FormControl>
       );
@@ -84,8 +107,14 @@ const RenderInput = ({
       );
     case FormFieldType.RADIO:
       return (
-        <FormControl className="space-y-3">
-          <RadioGroup onValueChange={field.onChange} defaultValue={field.value}>
+        <FormControl className="">
+          <RadioGroup
+            onValueChange={(value) => {
+              field.onChange(value);
+              if (onChangeCustom) onChangeCustom(value);
+            }}
+            value={String(field.value)}
+          >
             {props.children}
           </RadioGroup>
         </FormControl>
@@ -107,39 +136,72 @@ const RenderInput = ({
           </Select>
         </FormControl>
       );
+    // case FormFieldType.DATE_PICKER:
+    //   const [open, setOpen] = useState(false);
+    //   // Ensure date state always valid
+    //   const parsedValue = field.value ? new Date(field.value) : undefined;
+    //   const [date, setDate] = useState<Date | undefined>(parsedValue);
+
+    //   return (
+    //     <div className="flex rounded-md">
+    //       <FormControl>
+    //         <Input
+    //           type="date"
+    //           placeholder={props?.placeholder || ""}
+    //           value={field.value ?? ""}
+    //           onChange={(e) => {
+    //             const v = e.target.value;
+    //             field.onChange(v);
+    //             setDate(v ? new Date(v) : undefined);
+    //           }}
+    //           disabled={props?.disabled || false}
+    //           className={cn("input-date", props?.fontSize || "")}
+    //         />
+    //       </FormControl>
+
+    //       <Popover open={open} onOpenChange={setOpen}>
+    //         <PopoverTrigger asChild>
+    //           <CalendarIcon className="ml-2 mt-2 h-6 w-6" />
+    //         </PopoverTrigger>
+    //         <PopoverContent className="w-auto p-0" align="end">
+    //           <Calendar
+    //             mode="single"
+    //             selected={date}
+    //             onSelect={(value) => {
+    //               console.log("TEST Date Picker", value);
+    //               setDate(value);
+    //               if (value) {
+    //                 const formatted = format(value, "yyyy-MM-dd");
+    //                 field.onChange(formatted);
+    //               } else {
+    //                 field.onChange("");
+    //               }
+    //               setOpen(false);
+    //             }}
+    //             initialFocus
+    //           />
+    //         </PopoverContent>
+    //       </Popover>
+    //     </div>
+    //   );
+
     case FormFieldType.DATE_PICKER:
       return (
-        <div className="flex rounded-md">
-          <FormControl>
-            <>
-              <Input
-                type="date"
-                placeholder={props?.placeholder || ""}
-                {...field}
-                disabled={props?.disabled || false}
-                className={cn("input-date", props?.fontSize || "")}
-              />
-              <Popover>
-                <PopoverTrigger asChild>
-                  <CalendarIcon className="ml-2 mt-2 h-6 w-6" />
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="end">
-                  <Calendar
-                    mode="single"
-                    selected={date}
-                    onSelect={(value) => {
-                      setDate(value);
-                      if (value) {
-                        field.value = format(value, "yyyy-MM-dd");
-                      }
-                    }}
-                    initialFocus
-                  />
-                </PopoverContent>
-              </Popover>
-            </>
-          </FormControl>
-        </div>
+        <FormControl>
+          <DatePickerWithPopover
+            value={field.value ? new Date(field.value) : null}
+            onChange={field.onChange}
+          />
+        </FormControl>
+      );
+    case FormFieldType.DATETIME_PICKER:
+      return (
+        <FormControl>
+          <DateTimePickerWithPopover
+            value={field.value ? new Date(field.value) : null}
+            onChange={field.onChange}
+          />
+        </FormControl>
       );
     default:
       return null;
@@ -155,9 +217,18 @@ const CustomFormField = (props: CustomFormFieldProps) => {
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="flex-1 space-y-1">
+        <FormItem
+          className={`flex ${props.direction === "row" ? "flex-row items-center space-x-2" : "flex-col space-y-1"} flex-1`}
+        >
           {props.fieldType !== FormFieldType.CHECKBOX && label && (
-            <FormLabel className={fontSize || ""}>{label}</FormLabel>
+            <FormLabel
+              className={cn(
+                fontSize || "",
+                props.direction === "row" && props.labelWidth
+              )}
+            >
+              {label}
+            </FormLabel>
           )}
           <RenderInput
             field={field}

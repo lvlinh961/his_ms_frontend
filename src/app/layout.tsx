@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import AppProviders from "@/providers/app-proviceders";
+import Script from "next/script";
 import NextTopLoader from "nextjs-toploader";
 import { Toaster } from "@/components/ui/toaster";
 import { auth } from "@/auth";
@@ -28,6 +29,9 @@ export default async function RootLayout({
   const session = await auth();
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <Script src="/runtime-config.js" strategy="beforeInteractive" />
+      </head>
       <body className={`${geistSans.variable} ${geistMono.variable}`}>
         <NextTopLoader showSpinner={false} />
         <AppProviders session={session}>
