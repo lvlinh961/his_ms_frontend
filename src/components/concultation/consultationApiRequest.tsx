@@ -43,7 +43,7 @@ const consultationApiRequest = {
     ),
 
   // Get pay receipt for print
-  getPayReceiptForPrint: (receiptId: number) =>
+  getPayReceiptForPrint: (receiptId: string) =>
     http.get<GetPayReceiptResponse>("/out_patient/payment/print/" + receiptId),
 
   // Get prescription by ticket id

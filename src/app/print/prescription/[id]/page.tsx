@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import { PrescriptionForPrint } from "@/components/concultation/consultation.shema";
 import consultationApiRequest from "@/components/concultation/consultationApiRequest";
 import { useToast } from "@/components/ui/use-toast";
 import { dateFormater } from "@/lib/utils";
 
-export default function Page({ params }: { params: { id: string } }) {
-  const presId = params.id;
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const presId = resolvedParams.id;
   const [data, setData] = useState<PrescriptionForPrint>();
   const { toast } = useToast();
 
@@ -65,7 +66,7 @@ export default function Page({ params }: { params: { id: string } }) {
                 <strong>
                   {data &&
                     dateFormater.format(
-                      new Date(data?.patientInfo?.dateOfBirth)
+                      new Date(data?.patientInfo?.dateOfBirth),
                     )}
                 </strong>
               </p>
@@ -111,7 +112,10 @@ export default function Page({ params }: { params: { id: string } }) {
           <div className="flex w-full justify-between">
             <div className="flex items-start">
               <p>
-                Chẩn đoán: <strong>{data?.prescriptionInfo.diagnosis}</strong>
+                Chẩn đoán:{" "}
+                <strong>
+                  {data?.prescriptionInfo.diagnosis || data?.mainIcd10.name}
+                </strong>
               </p>
             </div>
           </div>
@@ -124,7 +128,7 @@ export default function Page({ params }: { params: { id: string } }) {
           {/* Loop to show list prescription item */}
           {data?.prescriptionItem &&
             data.prescriptionItem.map((item, index) => (
-              <div key="index" className="flex flex-col w-full">
+              <div key={index} className="flex flex-col w-full">
                 <div className="flex w-full justify-between">
                   <div>
                     <span>{`${index + 1})`}</span>

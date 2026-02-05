@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
 import { getConfig } from "@/config.server";
 
 export async function GET(request: Request) {
-  const cookieStore = cookies();
+  const cookieStore = await cookies();
   const sessionToken = cookieStore.get("sessionToken");
   const { NEXT_PUBLIC_API_ENDPOINT } = getConfig();
 

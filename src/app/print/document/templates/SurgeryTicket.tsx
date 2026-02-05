@@ -2,9 +2,7 @@
 
 import z from "zod";
 import {
-  DocumentTypeEnum,
   SurgeryTicketFormSchema,
-  GenderEnum,
   SurgeryLevelEnum,
   SurgeryLevelLabels,
   IncisionTypeEnum,
@@ -27,6 +25,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { DocumentTypeEnum, GenderEnum } from "@/types";
 
 export default function SurgeryTicket({
   ticketId,

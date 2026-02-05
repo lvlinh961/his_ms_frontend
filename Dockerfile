@@ -1,6 +1,10 @@
 FROM node:20-alpine AS BASE
 WORKDIR /app
+
 COPY package.json package-lock.json ./
+
+COPY patches ./patches
+
 RUN apk add --no-cache git \
     && npm ci --frozen-lockfile --legacy-peer-deps \
     && npm cache clean --force
@@ -25,7 +29,8 @@ FROM node:20-alpine AS PRODUCTION
 WORKDIR /app
 
 ENV NODE_ENV=production
-WORKDIR /app
+# Tắt telemetry của Next.js để tăng hiệu năng và tránh lỗi vặt
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # COPY --from=BUILD /app/package.json ./
 # COPY --from=BUILD /app/node_modules ./node_modules

@@ -102,7 +102,7 @@ export default function ConsultationHistoryDialog({
     <>
       {patientId && (
         <Dialog open={consultationOpen} onOpenChange={setConsultationOpen}>
-          <DialogTrigger>
+          <DialogTrigger asChild>
             <Button type="button" onClick={() => setConsultationOpen(true)}>
               Lịch sử khám
             </Button>

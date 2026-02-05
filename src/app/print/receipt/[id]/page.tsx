@@ -1,13 +1,14 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { use, useEffect, useState } from "react";
 import apiRequest from "@/components/concultation/consultationApiRequest";
 import { PayReceiptForPrint } from "@/components/concultation/consultation.shema";
 import { useToast } from "@/components/ui/use-toast";
 import { dateFormater } from "@/lib/utils";
 
-export default function Page({ params }: { params: { id: number } }) {
-  const receiptId = params.id;
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const receiptId = resolvedParams.id;
   const [data, setData] = useState<PayReceiptForPrint>();
   const { toast } = useToast();
 

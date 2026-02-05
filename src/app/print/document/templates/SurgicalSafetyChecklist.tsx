@@ -1,9 +1,6 @@
 "use client";
 
-import {
-  DocumentTypeEnum,
-  GenderEnum,
-} from "@/components/surgery/surgery.types";
+import { GenderEnum } from "@/types";
 import { useAppContext } from "@/providers/app-proviceders";
 import { useEffect, useState } from "react";
 import z from "zod";
@@ -12,6 +9,7 @@ import { SurgeryTicketFormSchema } from "@/components/surgery/surgery.types";
 import { formatDateTimeString, handleErrorApi } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useDashboardContext } from "@/providers/dashboard-providers";
+import { DocumentTypeEnum } from "@/types";
 
 export default function SurgicalSafetyChecklist({
   ticketId,

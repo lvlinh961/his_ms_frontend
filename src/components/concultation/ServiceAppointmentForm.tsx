@@ -126,6 +126,10 @@ export default function ServiceAppointmentForm() {
         const newTotalPrice = totalPrice + res.payload.result.price;
         setTotalPrice(newTotalPrice);
 
+        form.setValue("serviceId", 0);
+        form.setValue("serviceName", "");
+        form.setValue("quantity", 1);
+
         toast({
           title: "Thông báo",
           description: "Thêm dịch vụ thành công!",
@@ -192,7 +196,7 @@ export default function ServiceAppointmentForm() {
         window.open(
           printUrl,
           "_blank",
-          "width=800,height=600,left=200,top=100,toolbar=0,scrollbars=0"
+          "width=800,height=600,left=200,top=100,toolbar=0,scrollbars=0",
         );
       }
     } catch (error) {
@@ -236,7 +240,7 @@ export default function ServiceAppointmentForm() {
                                   form.setValue("serviceId", service.serviceId);
                                   form.setValue(
                                     "serviceName",
-                                    service.serviceName
+                                    service.serviceName,
                                   );
                                   setServices([]);
                                 }}

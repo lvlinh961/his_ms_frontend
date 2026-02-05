@@ -2,7 +2,7 @@
 
 import { useDashboardContext } from "@/providers/dashboard-providers";
 import { useAppContext } from "@/providers/app-proviceders";
-import { use, useEffect } from "react";
+import { useEffect } from "react";
 
 import {
   AcceptSurgeryTicketFormSchema,
@@ -16,8 +16,6 @@ import {
   DisinterestedMethodLabels,
   RiskOfAccidentEnum,
   RiskOfAcciedentLabels,
-  DocumentTypeEnum,
-  DocumentTypeLabels,
 } from "@/components/surgery/surgery.types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -25,15 +23,14 @@ import { Form } from "../ui/form";
 import { logger } from "@/lib/logger";
 import CustomFormField from "../atoms/custom-form-field";
 import { FormFieldType, HttpStatus } from "@/constants/enum";
-import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
+import { RadioGroupItem } from "../ui/radio-group";
 import { Label } from "../ui/label";
 import { ScrollArea } from "../ui/scroll-area";
 import { Button } from "../ui/button";
 import surgeryApiRequest from "./surgeryApiRequest";
 import { handleErrorApi } from "@/lib/utils";
-import { fi } from "date-fns/locale";
 import { toast } from "../ui/use-toast";
-import { Radio } from "lucide-react";
+import { DocumentTypeEnum, DocumentTypeLabels } from "@/types";
 
 export default function AcceptSurgeryTicketForm() {
   const { customerSelected } = useDashboardContext();

@@ -49,7 +49,7 @@ export const prescriptionSchema = z.object({
   mainIcd10: icd10Schema,
   totalPrice: z.preprocess(
     (val) => (val === "" || val === null ? undefined : Number(val)),
-    z.number().optional()
+    z.number().optional(),
   ),
   secondaryIcds: z.array(icd10Schema).optional(),
   listPrescriptionItem: z.array(medicationSchema).min(1),
@@ -124,7 +124,7 @@ export interface DrugMaterialSuggestResponse {
 export interface SavePrescriptionResponse {
   code: number;
   result?: {
-    prescriptionId: number;
+    prescriptionId: string;
     message: string;
   };
   message?: string;
@@ -169,6 +169,8 @@ export interface PrescriptionForPrint {
       quantity: number;
     },
   ];
+
+  mainIcd10: Icd10Schema;
 }
 
 export interface PayReceiptForPrint {

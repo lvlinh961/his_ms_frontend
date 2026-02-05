@@ -1,23 +1,5 @@
 import z from "zod";
-import clinicManagementApiRequest from "../administrator/clinic_management/clinicManagementApiRequest";
-import path from "path";
-
-export const DocumentTypeEnum = z.enum([
-  "SURGERY_CONSENT",
-  "SURGERY_TICKET",
-  "PROCEDURE_TICKET",
-  "SURGICAL_SAFETY_CHECKLIST",
-]);
-
-export const DocumentTypeLabels: Record<
-  z.infer<typeof DocumentTypeEnum>,
-  string
-> = {
-  SURGERY_CONSENT: "Phiếu cam kết phẫu thuật",
-  SURGERY_TICKET: "Phiếu phẫu thuật",
-  PROCEDURE_TICKET: "Phiếu thủ thuật",
-  SURGICAL_SAFETY_CHECKLIST: "Bảng kiểm an toàn phẫu thuật",
-};
+import { DocumentTypeEnum, GenderEnum } from "@/types";
 
 const surgeryDoctor = z.object({
   name: z.string().min(1, { message: "Vui lòng nhập tên bác sĩ!" }),
@@ -118,14 +100,6 @@ export const IncisionTypeLabels: Record<
   CLEAN_CONTAMINATED: "Sạch nhiễm",
   CONTAMINATED: "Nhiễm",
   DIRTY: "Bẩn",
-};
-
-export const GenderEnum = z.enum(["MALE", "FEMALE", "OTHER"]);
-
-export const GenderLabels: Record<z.infer<typeof GenderEnum>, string> = {
-  MALE: "Nam",
-  FEMALE: "Nữ",
-  OTHER: "Không xác định",
 };
 
 /**

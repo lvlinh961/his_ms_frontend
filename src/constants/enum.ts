@@ -8,6 +8,7 @@ export enum FormFieldType {
   DATE_PICKER_NEW = "datePicker_new",
   DATETIME_PICKER = "datetimePicker",
   NUMBER = "number",
+  DATE_INPUT = "dateInput",
 }
 
 // Loại icd chính hoặc là icd kèm theo

@@ -126,6 +126,7 @@ export default function PrescriptionForm() {
       const res = await consultationApiRequest.savePrescription(data);
 
       if (res.status === 200) {
+        form.setValue("prescriptionId", res.payload?.result?.prescriptionId);
         const printUrl = `print/prescription/${res.payload?.result?.prescriptionId}`;
         window.open(
           printUrl,

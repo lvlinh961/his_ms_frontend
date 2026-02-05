@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { groupBy, dateFormater } from "@/lib/utils";
 import {
   Table,
@@ -163,52 +163,45 @@ export default function CashierForm() {
         </TableHeader>
         <TableBody>
           {services &&
-            Object.entries(services).map(([key, items]) => (
-              <Collapsible key={key} asChild>
-                <>
-                  <CollapsibleTrigger asChild>
-                    <TableRow
-                      onClick={() => toggleGroup(key)}
-                      className="cursor-pointer bg-gray-200"
-                    >
-                      <TableCell colSpan={8}>
-                        <div className="flex w-full">
-                          <span className="mt-1">{key}</span>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  </CollapsibleTrigger>
-                  {expanded[key] && (
-                    <CollapsibleContent asChild>
-                      <>
-                        {(items as ServiceAppointment[]).map((item, index) => (
-                          <TableRow key={index}>
-                            <TableCell>{index + 1}</TableCell>
-                            <TableCell>{item.code}</TableCell>
-                            <TableCell>{item.name}</TableCell>
-                            <TableCell>
-                              {Intl.NumberFormat("vi-VN").format(item.quantity)}
-                            </TableCell>
-                            <TableCell>{item.unit}</TableCell>
-                            <TableCell>
-                              {Intl.NumberFormat("vi-VN").format(item.price)}
-                            </TableCell>
-                            <TableCell>
-                              {Intl.NumberFormat("vi-VN").format(
-                                item.price * item.quantity
-                              )}
-                            </TableCell>
-                            <TableCell>
-                              <X className="text-red-500" />
-                            </TableCell>
-                          </TableRow>
-                        ))}
-                      </>
-                    </CollapsibleContent>
-                  )}
-                </>
-              </Collapsible>
-            ))}
+    Object.entries(services).map(([key, items]) => (
+      // Dùng Fragment có key ở ngoài cùng để bọc 2 phần: Header và Content
+      <React.Fragment key={key}>
+        {/* Row tiêu đề nhóm */}
+        <TableRow
+          onClick={() => toggleGroup(key)}
+          className="cursor-pointer bg-gray-200"
+        >
+          <TableCell colSpan={8}>
+            <div className="flex w-full font-bold">
+              <span>{key}</span>
+            </div>
+          </TableCell>
+        </TableRow>
+
+        {/* Danh sách các item thuộc nhóm (hiển thị khi expanded[key] là true) */}
+        {expanded[key] &&
+          (items as ServiceAppointment[]).map((item, index) => (
+            <TableRow key={`${key}-${index}`}>
+              <TableCell>{index + 1}</TableCell>
+              <TableCell>{item.code}</TableCell>
+              <TableCell>{item.name}</TableCell>
+              <TableCell>
+                {Intl.NumberFormat("vi-VN").format(item.quantity)}
+              </TableCell>
+              <TableCell>{item.unit}</TableCell>
+              <TableCell>
+                {Intl.NumberFormat("vi-VN").format(item.price)}
+              </TableCell>
+              <TableCell>
+                {Intl.NumberFormat("vi-VN").format(item.price * item.quantity)}
+              </TableCell>
+              <TableCell>
+                <X className="text-red-500 cursor-pointer" />
+              </TableCell>
+            </TableRow>
+          ))}
+      </React.Fragment>
+    ))}
           {/* {serviceAppointments &&
             serviceAppointments.map((item, index) => (
               <TableRow key={index}>

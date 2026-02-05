@@ -2,11 +2,11 @@ import http from "@/lib/http";
 import { ApiResponseInterface } from "@/types";
 import {
   AcceptSurgeryTicketFormSchema,
-  DocumentTypeEnum,
   SurgeryTicketFormSchema,
   ProcedureTicketFormSchema,
 } from "./surgery.types";
 import z from "zod";
+import { DocumentTypeEnum } from "@/types";
 
 const surgeryApiRequest = {
   /**

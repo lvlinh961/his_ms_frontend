@@ -5,14 +5,10 @@ import {
   surgeryTicketFormSchema,
   SurgeryTicketFormSchema,
   defaultSurgeryTicketForm,
-  GenderEnum,
-  GenderLabels,
   SurgeryLevelEnum,
   SurgeryLevelLabels,
   IncisionTypeEnum,
   IncisionTypeLabels,
-  DocumentTypeEnum,
-  DocumentTypeLabels,
 } from "./surgery.types";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -31,6 +27,12 @@ import { useAppContext } from "@/providers/app-proviceders";
 import { calculateAge, handleErrorApi } from "@/lib/utils";
 import surgeryApiRequest from "./surgeryApiRequest";
 import { toast } from "../ui/use-toast";
+import {
+  DocumentTypeEnum,
+  DocumentTypeLabels,
+  GenderEnum,
+  GenderLabels,
+} from "@/types";
 
 export default function SurgeryTicketForm() {
   const surgeryTicketForm = useForm<SurgeryTicketFormSchema>({
@@ -157,6 +159,16 @@ export default function SurgeryTicketForm() {
   const printSafetyChecklist = () => {
     const ticketId = String(customerSelected.ticketId);
     const printUrl = `print/document/${ticketId}/${DocumentTypeEnum.enum.SURGICAL_SAFETY_CHECKLIST}`;
+    window.open(
+      printUrl,
+      "_blank",
+      "width=800,height=600,left=200,top=100,toolbar=0,scrollbars=0"
+    );
+  };
+
+  const printTreatmentRecord = () => {
+    const ticketId = String(customerSelected.ticketId);
+    const printUrl = `print/document/${ticketId}/${DocumentTypeEnum.enum.TREATMENT_RECORD}`;
     window.open(
       printUrl,
       "_blank",
@@ -579,6 +591,13 @@ export default function SurgeryTicketForm() {
               onClick={printSafetyChecklist}
             >
               In bảng kiểm an toàn
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={printTreatmentRecord}
+            >
+              In Phiếu điều trị
             </Button>
           </div>
         </form>

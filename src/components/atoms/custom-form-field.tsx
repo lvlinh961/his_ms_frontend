@@ -1,18 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { FormFieldType } from "@/constants/enum";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup } from "@/components/ui/radio-group";
-import { CalendarIcon } from "@radix-ui/react-icons";
-import { Calendar } from "@/components/ui/calendar";
 import { cn } from "@/lib/utils";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { format } from "date-fns";
 import { useAppContext } from "@/providers/app-proviceders";
 import { CustomFormFieldProps } from "@/types/index";
 import {
@@ -30,6 +22,7 @@ import {
 } from "@/components/ui/select";
 import DatePickerWithPopover from "./DatePickerWithPopover";
 import DateTimePickerWithPopover from "./DateTimePickerWithPopover";
+import { fi } from "date-fns/locale";
 
 const RenderInput = ({
   field,
@@ -203,6 +196,66 @@ const RenderInput = ({
           />
         </FormControl>
       );
+    case FormFieldType.DATE_INPUT:
+      return (
+        <FormControl>
+          <Input
+            placeholder="DD/MM/YYYY"
+            // Ta không spread {...field} trực tiếp mà ghi đè value và onChange
+            name={field.name}
+            onBlur={field.onBlur}
+            disabled={field.disabled}
+            // 1. CHUYỂN DATE -> STRING (Để hiển thị lên UI)
+            value={
+              field.value instanceof Date
+                ? `${String(field.value.getDate()).padStart(2, "0")}/${String(field.value.getMonth() + 1).padStart(2, "0")}/${field.value.getFullYear()}`
+                : field.value || ""
+            }
+            // CHỨC NĂNG BÔI ĐEN KHI FOCUS
+            onFocus={(e) => {
+              const target = e.target;
+              setTimeout(() => target.select(), 0);
+            }}
+            // 2. CHUYỂN STRING -> DATE (Để lưu vào Form State)
+            onChange={(e) => {
+              const val = e.target.value;
+              const digits = val.replace(/\D/g, "").slice(0, 8);
+
+              // Tạo format hiển thị dd/mm/yyyy
+              let formatted = digits;
+              if (digits.length > 2 && digits.length <= 4) {
+                formatted = `${digits.slice(0, 2)}/${digits.slice(2)}`;
+              } else if (digits.length > 4) {
+                formatted = `${digits.slice(0, 2)}/${digits.slice(2, 4)}/${digits.slice(4, 8)}`;
+              }
+
+              // Cập nhật UI tạm thời (React Hook Form sẽ nhận giá trị này)
+              // Tuy nhiên, nếu đủ 8 số, ta sẽ parse sang Date
+              if (digits.length === 8) {
+                const day = parseInt(digits.slice(0, 2));
+                const month = parseInt(digits.slice(2, 4)) - 1; // Month trong JS từ 0-11
+                const year = parseInt(digits.slice(4, 8));
+
+                const dateObj = new Date(year, month, day);
+
+                // Kiểm tra xem ngày có hợp lệ không (tránh trường hợp 31/02)
+                if (
+                  !isNaN(dateObj.getTime()) &&
+                  dateObj.getFullYear() === year
+                ) {
+                  field.onChange(dateObj); // LƯU DƯỚI DẠNG DATE OBJECT
+                } else {
+                  field.onChange(formatted); // Nếu chưa hợp lệ thì cứ để string để user nhập tiếp
+                }
+              } else {
+                field.onChange(formatted); // Lưu string khi đang nhập dở
+              }
+            }}
+            inputMode="numeric"
+            maxLength={10}
+          />
+        </FormControl>
+      );
     default:
       return null;
   }
@@ -224,7 +277,7 @@ const CustomFormField = (props: CustomFormFieldProps) => {
             <FormLabel
               className={cn(
                 fontSize || "",
-                props.direction === "row" && props.labelWidth
+                props.direction === "row" && props.labelWidth,
               )}
             >
               {label}

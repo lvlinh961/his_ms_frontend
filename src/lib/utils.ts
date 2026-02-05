@@ -95,6 +95,23 @@ export function formatDateTimeString(
   return `${hours} giờ ${minutes} phút, ngày ${day}/${month}/${year}`;
 }
 
+export function formatDateString(
+  dateInput?: Date | string | number
+): string {
+  if (!dateInput) return "";
+
+  const date = new Date(dateInput);
+  if (isNaN(date.getTime())) return "";
+
+  const hours = date.getHours().toString().padStart(2, "0");
+  const minutes = date.getMinutes().toString().padStart(2, "0");
+  const day = date.getDate().toString().padStart(2, "0");
+  const month = (date.getMonth() + 1).toString().padStart(2, "0");
+  const year = date.getFullYear();
+
+  return `Ngày ${day} tháng ${month} năm ${year}`;
+}
+
 export const formatDateToIsoWithoutMs = (date: Date): string => {
   return date.toISOString().split(".")[0];
 };

@@ -223,7 +223,15 @@
 .bg-dot-line {
   background-image: radial-gradient(circle, #000 0.6px, transparent 1px);
   background-repeat: repeat;
-  background-position-y: 2px; /* Đặt chấm ở đáy */
+  background-position-y: 4px; /* Đặt chấm ở đáy */
+  background-size: 4px 24px; /* Khoảng cách ngang chấm */
+  border-bottom: 1px dotted transparent; /* Giữ chiều cao cho in */
+}
+
+.bg-dot-line-lg {
+  background-image: radial-gradient(circle, #000 0.6px, transparent 1px);
+  background-repeat: repeat;
+  background-position-y: 10px; /* Đặt chấm ở đáy */
   background-size: 4px 24px; /* Khoảng cách ngang chấm */
   border-bottom: 1px dotted transparent; /* Giữ chiều cao cho in */
 }

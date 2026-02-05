@@ -76,15 +76,18 @@ export default function MedicationRow({
 
   const debouncedFetch = useCallback(fetchDrugMaterial, []);
 
+  let displayOrder = 0;
   return (
     <div>
       {fields.map((field, index) => {
         if (listPresItems[index] && listPresItems[index].deleted) return null;
+        displayOrder++;
+
         return (
           <div key={index} className="border-b py-4 space-y-2">
             <div className="grid grid-cols-[40px_4.5fr_1.5fr_1.5fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr] items-center gap-2">
               {/* Drug Index */}
-              <div className="text-center font-semibold">{index + 1}.</div>
+              <div className="text-center font-semibold">{displayOrder}.</div>
               {/* Tên thuốc */}
               <FormField
                 control={control}

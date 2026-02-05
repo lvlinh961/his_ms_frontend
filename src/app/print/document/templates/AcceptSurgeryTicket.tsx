@@ -2,7 +2,6 @@
 
 import z from "zod";
 import {
-  DocumentTypeEnum,
   AcceptSurgeryTicketFormSchema,
   SurgeryTypeEnum,
   SurgeryTypeLabels,
@@ -18,6 +17,7 @@ import { useAppContext } from "@/providers/app-proviceders";
 import { handleErrorApi } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import surgeryApiRequest from "@/components/surgery/surgeryApiRequest";
+import { DocumentTypeEnum } from "@/types";
 
 export default function AcceptSurgeryTicket({
   ticketId,

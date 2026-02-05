@@ -43,6 +43,9 @@ const receptionsApiRequest = {
       {}
     ),
 
+  updatePatientInfo: (request: PatientInfo) =>
+    http.put<ApiResponseInterface<PatientRegistResponse>>("/out_patient/registration/update-patient", request),
+
   // Post registration
   registPatientColsutation: (body: OutPatientRegistSchema) =>
     http.post<PatientRegistResponse>("/out_patient/registration", body),

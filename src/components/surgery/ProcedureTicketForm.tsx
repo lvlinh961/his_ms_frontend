@@ -5,12 +5,8 @@ import {
   procedureTicketFormSchema,
   ProcedureTicketFormSchema,
   defaultProcedureTicketForm,
-  GenderEnum,
-  GenderLabels,
   SurgeryLevelEnum,
   SurgeryLevelLabels,
-  DocumentTypeEnum,
-  DocumentTypeLabels,
 } from "./surgery.types";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAppContext } from "@/providers/app-proviceders";
@@ -27,6 +23,12 @@ import { Button } from "../ui/button";
 import { toast } from "../ui/use-toast";
 import surgeryApiRequest from "./surgeryApiRequest";
 import { calculateAge, handleErrorApi } from "@/lib/utils";
+import {
+  DocumentTypeEnum,
+  DocumentTypeLabels,
+  GenderEnum,
+  GenderLabels,
+} from "@/types";
 
 export default function ProcedureTicketForm() {
   const procedureTicketForm = useForm<ProcedureTicketFormSchema>({

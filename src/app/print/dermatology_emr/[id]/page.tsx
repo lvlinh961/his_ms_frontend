@@ -3,8 +3,8 @@
 import emrApiRequest from "@/components/emr/emrApiRequest";
 import { useAppContext } from "@/providers/app-proviceders";
 import { DermatologyEmrPrint } from "@/components/emr/emr-schema";
-import { useEffect, useState } from "react";
-import { handleErrorApi } from "@/lib/utils";
+import { use, useEffect, useState } from "react";
+import { handleErrorApi, formatDateString } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
 import { dateFormater, calculateAge } from "@/lib/utils";
 import {
@@ -17,11 +17,12 @@ import {
 } from "@/components/ui/table";
 import { logger } from "@/lib/logger";
 
-export default function Page({ params }: { params: { id: string } }) {
-  const dermatologyEmrId = params.id;
+export default function Page({ params }: { params: Promise<{ id: string }> }) {
+  const resolvedParams = use(params);
+  const dermatologyEmrId = resolvedParams.id;
   const { setLoadingOverlay } = useAppContext();
   const [data, setData] = useState<DermatologyEmrPrint>();
-  const ageMookup = "34";
+  const {user} = useAppContext();
 
   useEffect(() => {
     getDataForPrint();
@@ -846,11 +847,11 @@ export default function Page({ params }: { params: { id: string } }) {
                 rowSpan={8}
                 className="text-center border border-black font-bold p-1"
               >
-                Ngày .... tháng ..... năm ......
+                {formatDateString(new Date())}
                 <br />
                 Bác sỹ điều trị
                 <div className="mt-12">
-                  Họ tên ....................................
+                  Họ tên: {user?.firstName}
                 </div>
               </TableCell>
             </TableRow>

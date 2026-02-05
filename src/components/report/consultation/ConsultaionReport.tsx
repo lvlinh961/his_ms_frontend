@@ -151,6 +151,17 @@ export default function ConsultationReport() {
                     </TableRow>
                   ))
                 )}
+                <TableRow>
+                  <td colSpan={5} className="px-6 text-center font-bold">Tổng tiền: </td>
+                  <td className="px-6 text-left font-bold">
+                    {Intl.NumberFormat("vi-VN", {
+                      style: "currency",
+                      currency: "VND",
+                    }).format(
+                      reports.reduce((total, report) => total + report.amount, 0)
+                    )}
+                  </td>
+                </TableRow>
               </TableBody>
             </Table>
           </div>

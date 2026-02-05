@@ -8,7 +8,11 @@ export const registServiceInfo = z.object({
 });
 
 export const patientInfo = z.object({
-  patientId: z.string().optional(),
+  patientId: z
+    .string()
+    .nullable()
+    .optional()
+    .transform((val) => (val === "" ? null : val)),
   patientCode: z.string().optional(),
   patientName: z.string().min(1, { message: "Vui lòng nhập tên bệnh nhân!" }),
   phoneNumber: z.string(),
@@ -35,9 +39,10 @@ export const outPatientRegistSchema = z.object({
 
 export type OutPatientRegistSchema = z.infer<typeof outPatientRegistSchema>;
 
+export type OutPatientRegistInput = z.input<typeof outPatientRegistSchema>;
+
 export const defaultPatientRegist = {
   patientInfo: {
-    patientId: "",
     patientCode: "",
     patientName: "",
     phoneNumber: "",
@@ -60,7 +65,7 @@ export const defaultPatientRegist = {
     quantity: 1,
     reason: "",
   },
-} satisfies OutPatientRegistSchema;
+} satisfies OutPatientRegistInput;
 
 // Registration History
 export type RegistrationHistory = {

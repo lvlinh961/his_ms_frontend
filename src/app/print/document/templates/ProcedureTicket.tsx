@@ -2,8 +2,6 @@
 
 import z from "zod";
 import {
-  DocumentTypeEnum,
-  GenderEnum,
   ProcedureTicketFormSchema,
   SurgeryLevelEnum,
   SurgeryLevelLabels,
@@ -13,6 +11,7 @@ import { useAppContext } from "@/providers/app-proviceders";
 import surgeryApiRequest from "@/components/surgery/surgeryApiRequest";
 import { formatDateTimeString, handleErrorApi } from "@/lib/utils";
 import { Checkbox } from "@/components/ui/checkbox";
+import { DocumentTypeEnum, GenderEnum } from "@/types";
 
 export default function ProcedureTicket({
   ticketId,

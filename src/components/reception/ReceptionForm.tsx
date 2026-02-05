@@ -12,14 +12,10 @@ import {
 } from "../ui/form";
 import { Input } from "../ui/input";
 import { Button } from "../ui/button";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
-import { CheckIcon, ChevronDownIcon } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { RadioGroup, RadioGroupItem } from "../ui/radio-group";
-import { Command, CommandInput, CommandItem, CommandList } from "../ui/command";
 import { Textarea } from "../ui/textarea";
 import receptionsApiRequest from "./receptionApiRequest";
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "../ui/card";
 import DatePickerWithPopover from "../atoms/DatePickerWithPopover";
@@ -41,6 +37,11 @@ import {
 
 import ConsultationHistoryDialog from "./ConsultationHistoryDialog";
 import { logger } from "@/lib/logger";
+import CustomFormField from "../atoms/custom-form-field";
+import { FormFieldType } from "@/constants/enum";
+import { set } from "date-fns";
+import { ca } from "date-fns/locale";
+import { useDashboardContext } from "@/providers/dashboard-providers";
 
 export default function ReceptionForm() {
   const form = useForm<OutPatientRegistSchema>({
@@ -58,10 +59,17 @@ export default function ReceptionForm() {
   const [ethnicGroups, setEthnicGroups] = useState<EthnicGroupAutoSuggest[]>(
     []
   );
+  const {customerSelected} = useDashboardContext();
 
   const [loading, setLoading] = useState(false);
   const [patientId, setPatientId] = useState<string>(null);
   const { toast } = useToast();
+
+  useEffect(() => {
+    if (customerSelected?.patientCode.length > 0) {
+      getPatientInfo(customerSelected.patientCode);
+    }
+  }, [customerSelected]);
 
   async function onSubmit(data: OutPatientRegistSchema) {
     setLoading(true);
@@ -117,6 +125,28 @@ export default function ReceptionForm() {
         form.reset(regisData);
       }
     } catch (error) {
+      handleErrorApi({ error });
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updatePatientInfo = async () => {
+    setLoading(true);
+    try {
+      const res = await receptionsApiRequest.updatePatientInfo(
+        form.getValues("patientInfo")
+      );
+
+      if (res.status === 200) {
+        toast({
+          title: "Thông báo",
+          description: res?.payload?.result?.message,
+          duration: 3000,
+        });
+      }
+    }
+    catch (error) {
       handleErrorApi({ error });
     } finally {
       setLoading(false);
@@ -233,6 +263,7 @@ export default function ReceptionForm() {
                         placeholder="Mã bệnh nhân"
                         {...field}
                         onBlur={(e) => getPatientInfo(e.target.value)}
+                        onKeyDown={handleKeyPress}
                       />
                     </FormControl>
                     <FormMessage />
@@ -283,7 +314,7 @@ export default function ReceptionForm() {
                   </FormItem>
                 )}
               />
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="patientInfo.married"
                 render={({ field }) => (
@@ -313,7 +344,7 @@ export default function ReceptionForm() {
                     </FormControl>
                   </FormItem>
                 )}
-              />
+              /> */}
               <FormField
                 control={form.control}
                 name="patientInfo.cccd"
@@ -327,7 +358,7 @@ export default function ReceptionForm() {
                   </FormItem>
                 )}
               />
-              <FormField
+              {/* <FormField
                 control={form.control}
                 name="patientInfo.dateOfBirth"
                 render={({ field }) => (
@@ -342,7 +373,14 @@ export default function ReceptionForm() {
                     <FormMessage />
                   </FormItem>
                 )}
-              />
+              /> */}
+              <CustomFormField   
+                  control={form.control}
+                  name="patientInfo.dateOfBirth"
+                  label="Ngày sinh"
+                  placeholder="Ngày/Tháng/Năm"
+                  fieldType={FormFieldType.DATE_INPUT}
+                />
               <FormField
                 control={form.control}
                 name="patientInfo.phoneNumber"
@@ -663,10 +701,18 @@ export default function ReceptionForm() {
             </div>
             <div className="flex flex-row items-end justify-end mt-4">
               <Button
-                type="submit"
+                type="button"
                 className="bg-[hsl(var(--color-custom-1))] text-[hsl(var(--text-color))] mr-2"
+                onClick={form.handleSubmit(onSubmit)}
               >
                 Đăng ký
+              </Button>
+              <Button
+                type="button"
+                className="bg-[hsl(var(--color-custom-1))] text-[hsl(var(--text-color))] mr-2"
+                onClick={updatePatientInfo}
+              >
+                Ghi thông tin
               </Button>
               <ConsultationHistoryDialog patientId={patientId} />
             </div>

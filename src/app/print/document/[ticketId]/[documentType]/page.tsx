@@ -1,19 +1,22 @@
 "use client";
 
-import { DocumentTypeEnum } from "@/components/surgery/surgery.types";
+import { DocumentTypeEnum } from "@/types";
 import z from "zod";
 import AcceptSurgeryTicket from "../../templates/AcceptSurgeryTicket";
 import SurgeryTicket from "../../templates/SurgeryTicket";
 import { notFound } from "next/navigation";
 import ProcedureTicket from "../../templates/ProcedureTicket";
 import SurgicalSafetyChecklist from "../../templates/SurgicalSafetyChecklist";
+import TreatmentRecord from "../../templates/TreatmentRecord";
+import { use } from "react";
 
 export default function Page({
   params,
 }: {
-  params: { ticketId: string; documentType: z.infer<typeof DocumentTypeEnum> };
+  params: Promise<{ ticketId: string; documentType: z.infer<typeof DocumentTypeEnum> }>;
 }) {
-  const { ticketId, documentType } = params;
+  const resolvedParams = use(params);
+  const { ticketId, documentType } = resolvedParams;
 
   switch (documentType) {
     case DocumentTypeEnum.enum.SURGERY_CONSENT:
@@ -32,6 +35,10 @@ export default function Page({
           ticketId={ticketId}
           documentType={documentType}
         />
+      );
+    case DocumentTypeEnum.enum.TREATMENT_RECORD:
+      return (
+        <TreatmentRecord ticketId={ticketId} documentType={documentType} />
       );
     default:
       return notFound();

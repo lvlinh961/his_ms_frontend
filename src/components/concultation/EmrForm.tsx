@@ -83,6 +83,7 @@ export default function EmrForm() {
       const res = await emrApiRequest.createDermatologyEmr(data);
 
       if (res.status == HttpStatus.SUCCESS) {
+        dermatologyEmrForm.setValue("id", res.payload?.result?.id);
         toast({
           title: "Thông báo",
           description: "Tạo bệnh án thành công!",
