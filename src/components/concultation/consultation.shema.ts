@@ -140,6 +140,21 @@ export interface PatientRegisterInDateInfo {
   address: string;
 }
 
+export interface PrescriptionPrintItem {
+  name: string;
+  unit: string;
+  sellingUnit: string;
+  usage: string;
+  instruction: string;
+  morning: number;
+  noon: number;
+  afternoon: number;
+  evening: number;
+  quantity: number;
+}
+
+type PrescriptionItemPrintGroup = Record<string, PrescriptionPrintItem[]>;
+
 export interface PrescriptionForPrint {
   prescriptionInfo: {
     prescriptionId: string;
@@ -155,20 +170,7 @@ export interface PrescriptionForPrint {
 
   patientInfo: PatientRegisterInDateInfo;
 
-  prescriptionItem: [
-    {
-      name: string;
-      unit: string;
-      sellingUnit: string;
-      usage: string;
-      instruction: string;
-      morning: number;
-      noon: number;
-      afternoon: number;
-      evening: number;
-      quantity: number;
-    },
-  ];
+  prescriptionItems: PrescriptionItemPrintGroup;
 
   mainIcd10: Icd10Schema;
 }

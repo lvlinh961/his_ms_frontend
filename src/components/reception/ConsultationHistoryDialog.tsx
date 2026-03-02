@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-// import {  } from "@radix-ui/react-dialog";
 import { Button } from "../ui/button";
 import {
   Dialog,
@@ -17,7 +16,6 @@ import receptionsApiRequest from "./receptionApiRequest";
 import LoadingOverlay from "../layout/loading-overlay";
 import { handleErrorApi, datetimeFormater, dateFormater } from "@/lib/utils";
 import { RegistrationHistory } from "./reception.schema";
-import { es } from "date-fns/locale";
 import consultationApiRequest from "@/components/concultation/consultationApiRequest";
 import { PrescriptionForPrint } from "@/components/concultation/consultation.shema";
 import {
@@ -28,7 +26,6 @@ import {
   TableHeader,
   TableRow,
 } from "../ui/table";
-import { toast } from "../ui/use-toast";
 
 type ConsultationHistoryDialogProps = {
   patientId: string;
@@ -69,7 +66,7 @@ export default function ConsultationHistoryDialog({
     if (!prescriptionId) {
       return false;
     }
-    
+
     setActiveIdx(idx);
     setLoading(true);
 
@@ -93,7 +90,7 @@ export default function ConsultationHistoryDialog({
       window.open(
         printUrl,
         "_blank",
-        "width=800,height=600,left=200,top=100,toolbar=0,scrollbars=0"
+        "width=800,height=600,left=200,top=100,toolbar=0,scrollbars=0",
       );
     }
   };
@@ -103,9 +100,7 @@ export default function ConsultationHistoryDialog({
       {patientId && (
         <Dialog open={consultationOpen} onOpenChange={setConsultationOpen}>
           <DialogTrigger asChild>
-            <Button type="button" onClick={() => setConsultationOpen(true)}>
-              Lịch sử khám
-            </Button>
+            <Button type="button">Lịch sử khám</Button>
           </DialogTrigger>
           <DialogContent className="w-[900px] max-w-none">
             <DialogHeader>
@@ -132,7 +127,7 @@ export default function ConsultationHistoryDialog({
                               }`}
                             >
                               {datetimeFormater.format(
-                                new Date(item.createdDate)
+                                new Date(item.createdDate),
                               )}
                             </div>
                           ))}
@@ -162,7 +157,7 @@ export default function ConsultationHistoryDialog({
                         <strong>
                           {historyData?.patientInfo &&
                             dateFormater.format(
-                              new Date(historyData.patientInfo.dateOfBirth)
+                              new Date(historyData.patientInfo.dateOfBirth),
                             )}
                         </strong>
                       </p>
@@ -239,7 +234,7 @@ export default function ConsultationHistoryDialog({
                             className="bg-[hsl(var(--color-custom-1))] text-[hsl(var(--text-color))]"
                             onClick={() =>
                               printPrescription(
-                                historyData?.prescriptionInfo.prescriptionId
+                                historyData?.prescriptionInfo.prescriptionId,
                               )
                             }
                           >
@@ -283,23 +278,26 @@ export default function ConsultationHistoryDialog({
                           </TableRow>
                         </TableHeader>
                         <TableBody>
-                          {historyData?.prescriptionItem &&
-                            historyData.prescriptionItem.map((item, index) => (
-                              <TableRow key={index}>
-                                <TableCell>{item.name}</TableCell>
-                                <TableCell>{item.unit}</TableCell>
-                                <TableCell>
-                                  {historyData?.prescriptionInfo.time}
-                                </TableCell>
-                                <TableCell>{item.morning}</TableCell>
-                                <TableCell>{item.noon}</TableCell>
-                                <TableCell>{item.afternoon}</TableCell>
-                                <TableCell>{item.evening}</TableCell>
-                                <TableCell>{item.quantity}</TableCell>
-                                <TableCell>{item.sellingUnit}</TableCell>
-                                <TableCell>{item.usage}</TableCell>
-                              </TableRow>
-                            ))}
+                          {historyData?.prescriptionItems &&
+                            Object.entries(historyData.prescriptionItems).map(
+                              ([groupKey, listItem]) =>
+                                listItem.map((item, index) => (
+                                  <TableRow key={index}>
+                                    <TableCell>{item.name}</TableCell>
+                                    <TableCell>{item.unit}</TableCell>
+                                    <TableCell>
+                                      {historyData?.prescriptionInfo.time}
+                                    </TableCell>
+                                    <TableCell>{item.morning}</TableCell>
+                                    <TableCell>{item.noon}</TableCell>
+                                    <TableCell>{item.afternoon}</TableCell>
+                                    <TableCell>{item.evening}</TableCell>
+                                    <TableCell>{item.quantity}</TableCell>
+                                    <TableCell>{item.sellingUnit}</TableCell>
+                                    <TableCell>{item.usage}</TableCell>
+                                  </TableRow>
+                                )),
+                            )}
                         </TableBody>
                       </Table>
                     </div>
@@ -308,7 +306,7 @@ export default function ConsultationHistoryDialog({
               </div>
             </div>
             <DialogFooter>
-              <DialogClose>
+              <DialogClose asChild>
                 <Button
                   onClick={() => setConsultationOpen(false)}
                   variant="outline"
