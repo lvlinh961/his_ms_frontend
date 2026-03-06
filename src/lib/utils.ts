@@ -46,14 +46,14 @@ export const normalizePath = (path: string) => {
  */
 export const groupBy = <T, K extends keyof any>(
   array: T[],
-  key: (item: T) => K
+  key: (item: T) => K,
 ) =>
   array.reduce(
     (result, item) => {
       (result[key(item)] ||= []).push(item);
       return result;
     },
-    {} as Record<K, T[]>
+    {} as Record<K, T[]>,
   );
 
 /**
@@ -79,7 +79,7 @@ export const datetimeFormater = new Intl.DateTimeFormat("vi-VN", {
 });
 
 export function formatDateTimeString(
-  dateInput?: Date | string | number
+  dateInput?: Date | string | number,
 ): string {
   if (!dateInput) return "";
 
@@ -95,9 +95,7 @@ export function formatDateTimeString(
   return `${hours} giờ ${minutes} phút, ngày ${day}/${month}/${year}`;
 }
 
-export function formatDateString(
-  dateInput?: Date | string | number
-): string {
+export function formatDateString(dateInput?: Date | string | number): string {
   if (!dateInput) return "";
 
   const date = new Date(dateInput);
@@ -151,8 +149,8 @@ export const paramsString = (params: any) => {
           acc[key] = String(value);
           return acc;
         },
-        {} as Record<string, string>
-      )
+        {} as Record<string, string>,
+      ),
   ).toString();
 
   return queryString;
@@ -169,4 +167,39 @@ export const calculateAge = (dob: Date): number => {
   }
 
   return age;
+};
+
+export const formatISODate = (date: Date | null | undefined) => {
+  if (!date) return undefined;
+  return date.toISOString().split("T")[0];
+};
+
+export const getTodayISOString = () => {
+  const date = new Date();
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0"); // getMonth() chạy từ 0-11
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+/**
+ * Trả về ngày đầu tiên của tháng hiện tại (Ví dụ: 2026-03-01)
+ */
+export const getFirstDayOfMonthISOString = (): string => {
+  const date = new Date();
+  // Đặt ngày về 1, giờ về 0 để tránh lệch múi giờ khi format
+  const firstDay = new Date(date.getFullYear(), date.getMonth(), 1, 7, 0, 0);
+
+  const year = firstDay.getFullYear();
+  const month = String(firstDay.getMonth() + 1).padStart(2, "0"); // getMonth() chạy từ 0-11
+  const day = String(firstDay.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
+// Định dạng tiền tệ: 3.730.000 ₫
+export const formatCurrency = (amount: number) => {
+  return new Intl.NumberFormat("vi-VN", {
+    style: "currency",
+    currency: "VND",
+  }).format(amount);
 };

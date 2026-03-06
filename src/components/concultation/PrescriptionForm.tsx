@@ -24,16 +24,21 @@ import {
   ItemUnit,
   ItemUsage,
   PrescriptionSchema,
-  prescriptionSchema,
+  Prescription,
   defaultPrescription,
 } from "./consultation.shema";
+import { DoctorStoreSelect } from "../drug-store/DoctorStoreSelect";
+import { logger } from "@/lib/logger";
+import { useAppContext } from "@/providers/app-proviceders";
+import { handleErrorApi } from "@/lib/utils";
 
 export default function PrescriptionForm() {
-  const form = useForm<PrescriptionSchema>({
-    resolver: zodResolver(prescriptionSchema),
+  const form = useForm<Prescription>({
+    resolver: zodResolver(PrescriptionSchema),
     defaultValues: defaultPrescription,
   });
   const { customerSelected } = useDashboardContext();
+  const { currentStore } = useAppContext();
   const { toast } = useToast();
   const [units, setUnits] = useState<ItemUnit[]>([]);
   const [usages, setUsages] = useState<ItemUsage[]>([]);
@@ -49,6 +54,16 @@ export default function PrescriptionForm() {
       getPrescriptionByTicket(customerSelected.ticketId);
     }
   }, [customerSelected]);
+
+  useEffect(() => {
+    logger.info("currentStore", currentStore);
+    logger.info("pharStoreId", form.getValues("pharStoreId"));
+    setTimeout(() => {
+      if (currentStore && !form.getValues("pharStoreId")) {
+        form.setValue("pharStoreId", currentStore.id);
+      }
+    }, 100);
+  }, [customerSelected, currentStore]);
 
   useEffect(() => {
     getListUnit();
@@ -106,7 +121,7 @@ export default function PrescriptionForm() {
     }
   };
 
-  async function onSubmit(data: PrescriptionSchema) {
+  async function onSubmit(data: Prescription) {
     if (!customerSelected) {
       toast({
         title: "Lỗi",
@@ -118,10 +133,6 @@ export default function PrescriptionForm() {
 
     data.ticketId = customerSelected.ticketId;
 
-    if (form.formState.errors) {
-      console.log("Form error: ", form.formState.errors);
-    }
-
     try {
       const res = await consultationApiRequest.savePrescription(data);
 
@@ -131,7 +142,7 @@ export default function PrescriptionForm() {
         window.open(
           printUrl,
           "_blank",
-          "width=800,height=600,left=200,top=100,toolbar=0,scrollbars=0"
+          "width=800,height=600,left=200,top=100,toolbar=0,scrollbars=0",
         );
 
         toast({
@@ -140,11 +151,7 @@ export default function PrescriptionForm() {
         });
       }
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        variant: "destructive",
-        description: "Có lỗi khi lu lưu toa thuốc!",
-      });
+      handleErrorApi({ error });
     }
   }
 
@@ -155,7 +162,7 @@ export default function PrescriptionForm() {
       window.open(
         printUrl,
         "_blank",
-        "width=800,height=600,left=200,top=100,toolbar=0,scrollbars=0"
+        "width=800,height=600,left=200,top=100,toolbar=0,scrollbars=0",
       );
     } else {
       toast({
@@ -172,14 +179,14 @@ export default function PrescriptionForm() {
 
     if (rowIndex !== null) {
       const morning = form.getValues(
-        `listPrescriptionItem.${rowIndex}.morning`
+        `listPrescriptionItem.${rowIndex}.morning`,
       );
       const noon = form.getValues(`listPrescriptionItem.${rowIndex}.noon`);
       const afternoon = form.getValues(
-        `listPrescriptionItem.${rowIndex}.afternoon`
+        `listPrescriptionItem.${rowIndex}.afternoon`,
       );
       const evening = form.getValues(
-        `listPrescriptionItem.${rowIndex}.evening`
+        `listPrescriptionItem.${rowIndex}.evening`,
       );
       soNgay = form.getValues(`listPrescriptionItem.${rowIndex}.time`);
 
@@ -206,15 +213,26 @@ export default function PrescriptionForm() {
     }
   };
 
-  const handleFocus = () => {
-    inputRef.current.select();
+  const handleFocus = (e: any) => {
+    const target = e.currentTarget;
+    // requestAnimationFrame giúp đồng bộ với chu kỳ vẽ của trình duyệt
+    window.requestAnimationFrame(() => {
+      // CHỈ select nếu sau một nhịp render, ô này vẫn đang được focus
+      if (document.activeElement === target) {
+        target.select();
+      }
+    });
   };
 
   return (
-    <div className="flex items-center justify-center p-4">
+    <div className="flex flex-col items-center justify-center">
       <FormProvider {...form}>
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)}>
+          <form
+            onSubmit={form.handleSubmit(onSubmit, (error) =>
+              logger.error("Submit prescription error: ", error),
+            )}
+          >
             <fieldset className="border border-border rounded-lg p-4">
               <legend className="text-base font-semibold px-1">
                 Chỉ số cơ thể
@@ -233,10 +251,15 @@ export default function PrescriptionForm() {
                             type="number"
                             placeholder="Chiều cao"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(e.target.valueAsNumber)
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(
+                                val === "" ? 0 : e.target.valueAsNumber,
+                              );
+                            }}
                             onBlur={countBmi}
+                            onFocus={handleFocus}
+                            onMouseUp={(e) => e.preventDefault()}
                           />
                           <span className="text-sm text-muted-foreground">
                             cm
@@ -259,10 +282,15 @@ export default function PrescriptionForm() {
                             type="number"
                             placeholder="Cân nặng"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(e.target.valueAsNumber)
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(
+                                val === "" ? 0 : e.target.valueAsNumber,
+                              );
+                            }}
                             onBlur={countBmi}
+                            onFocus={handleFocus}
+                            onMouseUp={(e) => e.preventDefault()}
                           />
                           <span className="text-sm text-muted-foreground">
                             kg
@@ -285,9 +313,14 @@ export default function PrescriptionForm() {
                             type="number"
                             placeholder="Nhiệt độ"
                             {...field}
-                            onChange={(e) =>
-                              field.onChange(e.target.valueAsNumber)
-                            }
+                            onChange={(e) => {
+                              const val = e.target.value;
+                              field.onChange(
+                                val === "" ? 0 : e.target.valueAsNumber,
+                              );
+                            }}
+                            onFocus={handleFocus}
+                            onMouseUp={(e) => e.preventDefault()}
                           />
                           <span className="text-sm text-muted-foreground">
                             °C
@@ -341,7 +374,7 @@ export default function PrescriptionForm() {
                         <div className="flex items-center gap-2">
                           <Textarea
                             {...field}
-                            placeholder="Chẩn đoán"
+                            placeholder="Chẩn đoán ..."
                             className="resize-y min-h-[100px]"
                           />
                         </div>
@@ -376,13 +409,17 @@ export default function PrescriptionForm() {
                             type="number"
                             ref={inputRef}
                             onFocus={handleFocus}
+                            onMouseUp={(e) => e.preventDefault()}
                             onChange={(e) => {
-                              field.onChange(e.target.valueAsNumber);
+                              const val = e.target.value;
+                              field.onChange(
+                                val === "" ? 0 : e.target.valueAsNumber,
+                              );
                             }}
                             onBlur={(e) => {
                               form.setValue(
                                 "reExaminationDays",
-                                e.target.valueAsNumber
+                                e.target.valueAsNumber,
                               );
                               countQuantity(null);
                             }}
@@ -399,6 +436,10 @@ export default function PrescriptionForm() {
                 </div>
               </div>
             </fieldset>
+
+            <div className="gap-6 mt-2">
+              <DoctorStoreSelect />
+            </div>
 
             <div className="grid grid-cols-[40px_4fr_1fr_1fr_1fr_1fr_1fr_1fr_1fr_2fr_1fr] gap-2 bg-cyan-700 text-white font-semibold text-sm px-2 py-2 rounded-md mt-4">
               <div className="text-left">#</div>
@@ -435,7 +476,7 @@ export default function PrescriptionForm() {
                       <div className="flex items-center gap-2">
                         <Textarea
                           {...field}
-                          placeholder="Chẩn đoán"
+                          placeholder="Dặn dò..."
                           className="resize-y min-h-[100px]"
                         />
                       </div>

@@ -71,3 +71,19 @@ export interface ApiPagingResponseInterface<T> {
   totalPage: number;
   data?: T;
 }
+
+export interface SelectBoxSuggestOption {
+  id: string;
+  name: string;
+  code?: string;
+  // Bạn có thể thêm các trường bổ trợ nếu cần
+  description?: string;
+}
+
+export interface PharStoreInfo {
+  id: string;
+  name: string;
+  code: string;
+  onlyInStock?: boolean;
+  location: string | null;
+}

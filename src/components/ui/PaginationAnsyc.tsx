@@ -64,7 +64,7 @@ export const PaginationAnsyc: React.FC<ProductFormProps> = ({
                       {page}
                     </PaginationLink>
                   </PaginationItem>
-                )
+                ),
               )}
 
               <PaginationItem>

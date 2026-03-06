@@ -6,7 +6,7 @@ type HeadrProps = {
 };
 export default function LoadingOverlay({ hideMenu }: HeadrProps) {
   return (
-    <div className="fixed top-0 left-0 w-screen h-screen z-[99999] flex items-center justify-center bg-black/50 text-white">
+    <div className="fixed top-0 left-0 w-screen h-screen z-[99999] flex items-center justify-center bg-black/20 text-white">
       <Loader2 size={20} className="animate-spin" /> &nbsp; Loading...
     </div>
   );

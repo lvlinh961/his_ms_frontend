@@ -209,7 +209,7 @@ export default function ServiceAppointmentForm() {
   };
 
   return (
-    <div className="flex flex-col items-end justify-end p-4">
+    <div className="flex flex-col items-end justify-end">
       <Form {...form}>
         <form className="w-full" onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid grid-cols-1 md:grid-cols-5 gap-6">

@@ -1,5 +1,5 @@
 import http from "@/lib/http";
-import { PrescriptionSchema } from "./consultation.shema";
+import { Prescription } from "./consultation.shema";
 import {
   ServiceAppointmentSchema,
   Icd10SuggestResponse,
@@ -33,7 +33,7 @@ const consultationApiRequest = {
     ),
 
   // Post prescription
-  savePrescription: (body: PrescriptionSchema) =>
+  savePrescription: (body: Prescription) =>
     http.post<SavePrescriptionResponse>("/out_patient/prescription", body),
 
   // Get prescription for print

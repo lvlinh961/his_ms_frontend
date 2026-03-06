@@ -86,7 +86,7 @@ export default function CashierForm() {
 
     const groupedService = groupBy(
       serviceAppointments,
-      (serviceAppointments) => serviceAppointments.type
+      (serviceAppointments) => serviceAppointments.type,
     );
     setServices(groupedService);
   }, []);
@@ -123,13 +123,6 @@ export default function CashierForm() {
             </p>
           </div>
         </div>
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-          <div>
-            <p>
-              Lý do khám: <strong>{patientInfo?.reason}</strong>
-            </p>
-          </div>
-        </div>
       </fieldset>
 
       <Table className="mt-4">
@@ -163,45 +156,47 @@ export default function CashierForm() {
         </TableHeader>
         <TableBody>
           {services &&
-    Object.entries(services).map(([key, items]) => (
-      // Dùng Fragment có key ở ngoài cùng để bọc 2 phần: Header và Content
-      <React.Fragment key={key}>
-        {/* Row tiêu đề nhóm */}
-        <TableRow
-          onClick={() => toggleGroup(key)}
-          className="cursor-pointer bg-gray-200"
-        >
-          <TableCell colSpan={8}>
-            <div className="flex w-full font-bold">
-              <span>{key}</span>
-            </div>
-          </TableCell>
-        </TableRow>
+            Object.entries(services).map(([key, items]) => (
+              // Dùng Fragment có key ở ngoài cùng để bọc 2 phần: Header và Content
+              <React.Fragment key={key}>
+                {/* Row tiêu đề nhóm */}
+                <TableRow
+                  onClick={() => toggleGroup(key)}
+                  className="cursor-pointer bg-gray-200"
+                >
+                  <TableCell colSpan={8}>
+                    <div className="flex w-full font-bold">
+                      <span>{key}</span>
+                    </div>
+                  </TableCell>
+                </TableRow>
 
-        {/* Danh sách các item thuộc nhóm (hiển thị khi expanded[key] là true) */}
-        {expanded[key] &&
-          (items as ServiceAppointment[]).map((item, index) => (
-            <TableRow key={`${key}-${index}`}>
-              <TableCell>{index + 1}</TableCell>
-              <TableCell>{item.code}</TableCell>
-              <TableCell>{item.name}</TableCell>
-              <TableCell>
-                {Intl.NumberFormat("vi-VN").format(item.quantity)}
-              </TableCell>
-              <TableCell>{item.unit}</TableCell>
-              <TableCell>
-                {Intl.NumberFormat("vi-VN").format(item.price)}
-              </TableCell>
-              <TableCell>
-                {Intl.NumberFormat("vi-VN").format(item.price * item.quantity)}
-              </TableCell>
-              <TableCell>
-                <X className="text-red-500 cursor-pointer" />
-              </TableCell>
-            </TableRow>
-          ))}
-      </React.Fragment>
-    ))}
+                {/* Danh sách các item thuộc nhóm (hiển thị khi expanded[key] là true) */}
+                {expanded[key] &&
+                  (items as ServiceAppointment[]).map((item, index) => (
+                    <TableRow key={`${key}-${index}`}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{item.code}</TableCell>
+                      <TableCell>{item.name}</TableCell>
+                      <TableCell>
+                        {Intl.NumberFormat("vi-VN").format(item.quantity)}
+                      </TableCell>
+                      <TableCell>{item.unit}</TableCell>
+                      <TableCell>
+                        {Intl.NumberFormat("vi-VN").format(item.price)}
+                      </TableCell>
+                      <TableCell>
+                        {Intl.NumberFormat("vi-VN").format(
+                          item.price * item.quantity,
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <X className="text-red-500 cursor-pointer" />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+              </React.Fragment>
+            ))}
           {/* {serviceAppointments &&
             serviceAppointments.map((item, index) => (
               <TableRow key={index}>

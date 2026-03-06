@@ -1,4 +1,5 @@
 "use client";
+
 import React, {
   createContext,
   useCallback,
@@ -8,8 +9,9 @@ import React, {
 } from "react";
 import ThemeProvider from "@/components/layout/ThemeToggle/theme-provider";
 import LoadingOverlay from "@/components/layout/loading-overlay";
-import { SessionProvider, SessionProviderProps } from "next-auth/react";
+import { SessionProviderProps } from "next-auth/react";
 import { AccountResType } from "@/schemaValidation/account.schema";
+import { PharStoreInfo } from "@/types";
 type User = AccountResType["data"];
 const fontSizeDefault = "text-sm";
 
@@ -22,6 +24,9 @@ const AppContext = createContext<{
   colorSetting: string | null;
   setColorSetting: (color: string) => void;
   setLoadingOverlay: (isLoading: boolean | false) => void;
+  currentStore: PharStoreInfo | null;
+  setCurrentStore: (store: PharStoreInfo | null) => void;
+  isInitialized: boolean;
 }>({
   user: null,
   setUser: () => {},
@@ -31,6 +36,9 @@ const AppContext = createContext<{
   colorSetting: null,
   setColorSetting: () => {},
   setLoadingOverlay: () => {},
+  currentStore: null,
+  setCurrentStore: () => {},
+  isInitialized: false,
 });
 
 export const useAppContext = () => {
@@ -50,23 +58,36 @@ export default function Providers({
   const [isLoading, setLoadingOverlayState] = useState(false);
   const [fontSize, setFontSizeState] = useState(fontSizeDefault);
   const [colorSetting, setColorSettingState] = useState("");
+  const [isInitialized, setIsInitialized] = useState(false);
+  const [currentStore, setCurrentStoreState] = useState<PharStoreInfo | null>(
+    null,
+  );
 
   const setUser = useCallback(
     (user: User | null) => {
       setUserState(user);
       localStorage.setItem("user", JSON.stringify(user));
     },
-    [setUserState]
+    [setUserState],
   );
 
   useEffect(() => {
     setFontSizeState(localStorage.getItem("fontSize") || fontSizeDefault);
     setColorSettingState(localStorage.getItem("colorSetting") || "");
 
+    // Lấy thông tin người dung đăng nhập
     const storedUser = localStorage.getItem("user");
     if (storedUser) {
       setUserState(JSON.parse(storedUser));
     }
+
+    // Lấy thông tin kho/quầy được chọn
+    const savedStore = localStorage.getItem("selected_store");
+    if (savedStore) {
+      setCurrentStoreState(JSON.parse(savedStore));
+    }
+
+    setIsInitialized(true);
   }, []);
 
   const setFontSize = useCallback((size: string) => {
@@ -81,7 +102,7 @@ export default function Providers({
       setColorSettingState(color);
       localStorage.setItem("colorSetting", color);
     },
-    [setColorSettingState]
+    [setColorSettingState],
   );
 
   // set loading overlay
@@ -89,8 +110,13 @@ export default function Providers({
     (isLoading: boolean) => {
       setLoadingOverlayState(isLoading);
     },
-    [setLoadingOverlayState]
+    [setLoadingOverlayState],
   );
+
+  const setCurrentStore = (store: PharStoreInfo) => {
+    setCurrentStoreState(store);
+    localStorage.setItem("selected_store", JSON.stringify(store));
+  };
 
   useEffect(() => {
     const color = localStorage.getItem("colorSetting") ?? "";
@@ -113,6 +139,9 @@ export default function Providers({
           colorSetting,
           setColorSetting,
           setLoadingOverlay,
+          currentStore,
+          setCurrentStore,
+          isInitialized,
         }}
       >
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>

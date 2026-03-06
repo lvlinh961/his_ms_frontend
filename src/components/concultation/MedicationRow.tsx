@@ -11,7 +11,7 @@ import {
   SelectItem,
 } from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { cn, formatCurrency, handleErrorApi } from "@/lib/utils";
 import {
   Control,
   useFieldArray,
@@ -20,8 +20,8 @@ import {
   FormState,
 } from "react-hook-form";
 import consultationApiRequest from "./consultationApiRequest";
-import { FormControl, FormField, FormLabel } from "../ui/form";
-import { useCallback, useRef, useState } from "react";
+import { FormControl, FormField, FormItem, FormLabel } from "../ui/form";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "../ui/card";
 import {
@@ -29,6 +29,11 @@ import {
   ItemUnit,
   ItemUsage,
 } from "./consultation.shema";
+import { useAppContext } from "@/providers/app-proviceders";
+import drugStoreApiRequest from "../drug-store/drugStoreApiRequest";
+import { AutoSuggest } from "../ui/AutoSuggest";
+import { DrugStockSuggest } from "../drug-store/drug-store.schema";
+import { HttpStatus } from "@/constants/enum";
 
 interface MedicationRowProp {
   control: Control<any>;
@@ -52,29 +57,77 @@ export default function MedicationRow({
     name: "listPrescriptionItem",
   });
   const [drugMaterials, setDrugMaterials] = useState<DrugMaterialSuggestItem[]>(
-    []
+    [],
   );
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const { toast } = useToast();
   const listPresItems = useWatch({ control, name: "listPrescriptionItem" });
+  const { currentStore } = useAppContext();
+  const storeRef = useRef(currentStore);
 
-  const fetchDrugMaterial = async (query: string) => {
-    if (!query) return setDrugMaterials([]);
+  useEffect(() => {
+    storeRef.current = currentStore;
+  }, [currentStore]);
+
+  // const fetchDrugMaterial = async (query: string) => {
+  //   if (!query) return setDrugMaterials([]);
+
+  //   try {
+  //     const res =
+  //       await consultationApiRequest.getDrugMaterialAutoSuggest(query);
+  //     setDrugMaterials(res.payload.result);
+  //   } catch (error) {
+  //     toast({
+  //       title: "Lỗi",
+  //       variant: "destructive",
+  //       description: "Không thể lấy danh sách ICD10",
+  //     });
+  //   }
+  // };
+
+  const fetchDrugsForPrescription = async (query: string) => {
+    const activeStore = storeRef.current;
+
+    if (!query || query.length < 2 || !activeStore?.id) return [];
 
     try {
-      const res =
-        await consultationApiRequest.getDrugMaterialAutoSuggest(query);
-      setDrugMaterials(res.payload.result);
+      const params = new URLSearchParams();
+      params.append("query", query);
+      params.append("store", activeStore.id);
+      params.append("onlyInStock", String(activeStore.onlyInStock ?? true));
+
+      const res = await drugStoreApiRequest.searchInStock(params);
+
+      if (res.status == HttpStatus.SUCCESS) {
+        return res.payload.result.map((item: any, index: number) => ({
+          ...item,
+          id: item.id ?? item.drugMaterialId,
+        }));
+      }
+
+      return [];
     } catch (error) {
-      toast({
-        title: "Lỗi",
-        variant: "destructive",
-        description: "Không thể lấy danh sách ICD10",
-      });
+      handleErrorApi({ error });
+      return [];
     }
   };
 
-  const debouncedFetch = useCallback(fetchDrugMaterial, []);
+  const onFocus = (e: any) => {
+    const target = e.currentTarget;
+    // requestAnimationFrame giúp đồng bộ với chu kỳ vẽ của trình duyệt
+    window.requestAnimationFrame(() => {
+      // CHỈ select nếu sau một nhịp render, ô này vẫn đang được focus
+      if (document.activeElement === target) {
+        target.select();
+      }
+    });
+  };
+
+  // const debouncedFetch = useCallback(fetchDrugMaterial, []);
+  const debounceFetchDrugsForPrescription = useCallback(
+    fetchDrugsForPrescription,
+    [],
+  );
 
   let displayOrder = 0;
   return (
@@ -89,7 +142,7 @@ export default function MedicationRow({
               {/* Drug Index */}
               <div className="text-center font-semibold">{displayOrder}.</div>
               {/* Tên thuốc */}
-              <FormField
+              {/* <FormField
                 control={control}
                 name={`listPrescriptionItem.${index}.drugName`}
                 render={({ field }) => (
@@ -154,6 +207,99 @@ export default function MedicationRow({
                       )}
                     </div>
                   </FormControl>
+                )}
+              /> */}
+
+              <FormField
+                control={control}
+                name={`listPrescriptionItem.${index}.drugName`}
+                render={({ field }) => (
+                  <FormItem className="flex-1">
+                    <FormControl>
+                      <AutoSuggest<DrugStockSuggest>
+                        // Ép kiểu để tránh lỗi TS(2352) như đã xử lý
+                        value={(field.value as unknown as string) || ""}
+                        fetchData={debounceFetchDrugsForPrescription}
+                        getDisplayValue={(item) => item.name}
+                        onSelect={(drug) => {
+                          // Fill toàn bộ thông tin vào dòng đơn thuốc
+                          setValue(
+                            `listPrescriptionItem.${index}.drugId`,
+                            drug.drugMaterialId,
+                          );
+                          setValue(
+                            `listPrescriptionItem.${index}.drugName`,
+                            drug.name,
+                          );
+                          setValue(
+                            `listPrescriptionItem.${index}.hoatChat`,
+                            drug.hoatChat || "",
+                          );
+                          setValue(
+                            `listPrescriptionItem.${index}.unit`,
+                            drug.unit,
+                          );
+                          setValue(
+                            `listPrescriptionItem.${index}.sellingUnit`,
+                            drug.unit,
+                          );
+                          setValue(
+                            `listPrescriptionItem.${index}.price`,
+                            drug.sellPrice,
+                          );
+
+                          // Tự động tính toán số lượng hoặc focus ô tiếp theo
+                          countQuantity(index);
+
+                          // Logic focus vào ô số lượng (giả sử ô tiếp theo là quantity)
+                          setTimeout(() => {
+                            const nextInput = document.getElementsByName(
+                              `listPrescriptionItem.${index}.morning`,
+                            )[0] as HTMLInputElement;
+                            nextInput?.focus();
+                          }, 100);
+                        }}
+                        renderItem={(item) => (
+                          <div
+                            className={cn(
+                              "flex flex-col py-1 border-b last:border-0",
+                              item.outOfStock && "opacity-50",
+                            )}
+                          >
+                            <div className="flex justify-between items-center">
+                              <span className="font-bold text-sm text-blue-900">
+                                {item.name}
+                              </span>
+                              {item.sellPrice && item.sellPrice > 0 ? (
+                                <span className="text-emerald-700 font-bold text-xs">
+                                  {formatCurrency(item.sellPrice)}
+                                </span>
+                              ) : (
+                                <span className="text-slate-400 text-[10px] italic">
+                                  Chưa có giá
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex justify-between text-[10px] mt-0.5">
+                              <span className="text-slate-500 italic truncate max-w-[180px]">
+                                {item.hoatChat || "Không rõ hoạt chất"}
+                              </span>
+                              <span
+                                className={cn(
+                                  "font-medium",
+                                  item.availableQuantity > 0
+                                    ? "text-orange-600"
+                                    : "text-red-500",
+                                )}
+                              >
+                                Tồn: {item.availableQuantity} {item.unit}
+                              </span>
+                            </div>
+                          </div>
+                        )}
+                      />
+                    </FormControl>
+                  </FormItem>
                 )}
               />
 
@@ -225,8 +371,14 @@ export default function MedicationRow({
                         type="number"
                         min={0}
                         className={cn("text-center bg-green-100")}
+                        onFocus={onFocus}
+                        onMouseUp={(e) => e.preventDefault()}
+                        onWheel={(e) => (e.target as HTMLElement).blur()}
                         onChange={(e) => {
-                          field.onChange(e.target.valueAsNumber);
+                          const val = e.target.value;
+                          field.onChange(
+                            val === "" ? 0 : e.target.valueAsNumber,
+                          );
                         }}
                         onBlur={(e) => {
                           countQuantity(index);
@@ -249,11 +401,15 @@ export default function MedicationRow({
                       type="number"
                       min={0}
                       onChange={(e) => {
-                        field.onChange(e.target.valueAsNumber);
+                        const val = e.target.value;
+                        field.onChange(val === "" ? 0 : e.target.valueAsNumber);
                       }}
                       onBlur={(e) => {
                         countQuantity(index);
                       }}
+                      onFocus={onFocus}
+                      onMouseUp={(e) => e.preventDefault()}
+                      onWheel={(e) => (e.target as HTMLElement).blur()}
                     />
                   </div>
                 )}
@@ -271,8 +427,14 @@ export default function MedicationRow({
                         type="number"
                         className="w-20 bg-blue-100 text-center"
                         onChange={(e) => {
-                          field.onChange(e.target.valueAsNumber);
+                          const val = e.target.value;
+                          field.onChange(
+                            val === "" ? 0 : e.target.valueAsNumber,
+                          );
                         }}
+                        onFocus={onFocus}
+                        onMouseUp={(e) => e.preventDefault()}
+                        onWheel={(e) => (e.target as HTMLElement).blur()}
                       />
                     </div>
                   )}

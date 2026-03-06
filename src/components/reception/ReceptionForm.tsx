@@ -1,5 +1,4 @@
 "use client";
-import z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -18,7 +17,6 @@ import receptionsApiRequest from "./receptionApiRequest";
 import { useCallback, useEffect, useState } from "react";
 import { useToast } from "@/components/ui/use-toast";
 import { Card, CardContent } from "../ui/card";
-import DatePickerWithPopover from "../atoms/DatePickerWithPopover";
 import LoadingOverlay from "../layout/loading-overlay";
 import {
   outPatientRegistSchema,
@@ -39,8 +37,6 @@ import ConsultationHistoryDialog from "./ConsultationHistoryDialog";
 import { logger } from "@/lib/logger";
 import CustomFormField from "../atoms/custom-form-field";
 import { FormFieldType } from "@/constants/enum";
-import { set } from "date-fns";
-import { ca } from "date-fns/locale";
 import { useDashboardContext } from "@/providers/dashboard-providers";
 
 export default function ReceptionForm() {
@@ -54,12 +50,12 @@ export default function ReceptionForm() {
   const [wards, setWards] = useState<WardAutoSuggest[]>([]);
   const [careers, setCareers] = useState<CareerAutoSuggest[]>([]);
   const [nationalities, setNationalities] = useState<NationalityAutoSuggest[]>(
-    []
+    [],
   );
   const [ethnicGroups, setEthnicGroups] = useState<EthnicGroupAutoSuggest[]>(
-    []
+    [],
   );
-  const {customerSelected} = useDashboardContext();
+  const { customerSelected } = useDashboardContext();
 
   const [loading, setLoading] = useState(false);
   const [patientId, setPatientId] = useState<string>(null);
@@ -135,7 +131,7 @@ export default function ReceptionForm() {
     setLoading(true);
     try {
       const res = await receptionsApiRequest.updatePatientInfo(
-        form.getValues("patientInfo")
+        form.getValues("patientInfo"),
       );
 
       if (res.status === 200) {
@@ -145,8 +141,7 @@ export default function ReceptionForm() {
           duration: 3000,
         });
       }
-    }
-    catch (error) {
+    } catch (error) {
       handleErrorApi({ error });
     } finally {
       setLoading(false);
@@ -242,7 +237,7 @@ export default function ReceptionForm() {
   const debouncedCareerAutoSuggest = useCallback(careerAutoSuggest, []);
   const debouncedNationalityAutoSuggest = useCallback(
     nationalityAutoSuggest,
-    []
+    [],
   );
   const debouncedEthnicGroupAutoSuggest = useCallback(ethnicAutoSuggest, []);
 
@@ -374,13 +369,13 @@ export default function ReceptionForm() {
                   </FormItem>
                 )}
               /> */}
-              <CustomFormField   
-                  control={form.control}
-                  name="patientInfo.dateOfBirth"
-                  label="Ngày sinh"
-                  placeholder="Ngày/Tháng/Năm"
-                  fieldType={FormFieldType.DATE_INPUT}
-                />
+              <CustomFormField
+                control={form.control}
+                name="patientInfo.dateOfBirth"
+                label="Ngày sinh"
+                placeholder="Ngày/Tháng/Năm"
+                fieldType={FormFieldType.DATE_INPUT}
+              />
               <FormField
                 control={form.control}
                 name="patientInfo.phoneNumber"
@@ -421,7 +416,7 @@ export default function ReceptionForm() {
                                   onClick={() => {
                                     form.setValue(
                                       "patientInfo.ethnicGroup",
-                                      ethnic.viName
+                                      ethnic.viName,
                                     );
                                     setEthnicGroups([]);
                                   }}
@@ -466,7 +461,7 @@ export default function ReceptionForm() {
                                   onClick={() => {
                                     form.setValue(
                                       "patientInfo.nationality",
-                                      nationality.viName
+                                      nationality.viName,
                                     );
                                     setNationalities([]);
                                   }}
@@ -510,7 +505,7 @@ export default function ReceptionForm() {
                                   onClick={() => {
                                     form.setValue(
                                       "patientInfo.career",
-                                      career.viName
+                                      career.viName,
                                     );
                                     setCareers([]);
                                   }}
@@ -571,7 +566,7 @@ export default function ReceptionForm() {
                                   onClick={() => {
                                     form.setValue(
                                       "patientInfo.province",
-                                      province.viName
+                                      province.viName,
                                     );
                                     setProvinces([]);
                                     setProvinceId(province.id);
@@ -616,7 +611,7 @@ export default function ReceptionForm() {
                                   onClick={() => {
                                     form.setValue(
                                       "patientInfo.ward",
-                                      ward.viName
+                                      ward.viName,
                                     );
                                     setWards([]);
                                   }}
@@ -662,11 +657,11 @@ export default function ReceptionForm() {
                                   onClick={() => {
                                     form.setValue(
                                       "serviceInfo.serviceId",
-                                      service.serviceId
+                                      service.serviceId,
                                     );
                                     form.setValue(
                                       "serviceInfo.serviceName",
-                                      service.serviceName
+                                      service.serviceName,
                                     );
                                     setServices([]);
                                   }}

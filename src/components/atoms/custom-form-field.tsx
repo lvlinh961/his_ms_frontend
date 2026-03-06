@@ -23,6 +23,7 @@ import {
 import DatePickerWithPopover from "./DatePickerWithPopover";
 import DateTimePickerWithPopover from "./DateTimePickerWithPopover";
 import { fi } from "date-fns/locale";
+import SelectBoxSuggest from "../ui/SelectBoxSuggest";
 
 const RenderInput = ({
   field,
@@ -127,6 +128,21 @@ const RenderInput = ({
             </FormControl>
             <SelectContent>{props.children}</SelectContent>
           </Select>
+        </FormControl>
+      );
+    case FormFieldType.SELECT_SUGGEST:
+      return (
+        <FormControl>
+          <SelectBoxSuggest
+            options={props.options || []} // Bạn cần thêm prop options vào CustomFormFieldProps
+            value={field.value}
+            onChange={(val) => {
+              field.onChange(val);
+              if (onChangeCustom) onChangeCustom(val);
+            }}
+            placeholder={props.placeholder}
+            disabled={props.disabled}
+          />
         </FormControl>
       );
     // case FormFieldType.DATE_PICKER:

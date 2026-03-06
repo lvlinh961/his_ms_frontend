@@ -5,11 +5,11 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  title: "Khám bệnh",
-  description: "Khám/Chữa bệnh - Ra y lệnh cho bệnh nhân",
+  title: "Quản lý kho dược",
+  description: "Quản lý nhập xuất tồn kho dược",
 };
 
-export default function DashboardLayout({
+export default function ForbidentLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -18,9 +18,8 @@ export default function DashboardLayout({
     <>
       <DashboardProvider>
         <Header />
-        <div className="flex h-screen overflow-auto">
-          <CustomerLeftSideBar />
-          <main className="flex-1 overflow-auto pt-16">{children}</main>
+        <div className="flex h-screen overflow-hidden">
+          <main className="flex-1 overflow-hidden pt-16">{children}</main>
         </div>
       </DashboardProvider>
     </>

@@ -9,6 +9,7 @@ export enum FormFieldType {
   DATETIME_PICKER = "datetimePicker",
   NUMBER = "number",
   DATE_INPUT = "dateInput",
+  SELECT_SUGGEST = "selectSuggest",
 }
 
 // Loại icd chính hoặc là icd kèm theo
@@ -34,3 +35,25 @@ export const DisableStatusLabel: Record<DisableStatus, string> = {
   [DisableStatus.ENABLE]: "Hoạt động",
   [DisableStatus.DISABLE]: "Dừng",
 };
+
+export enum PharImportStatus {
+  "PENDING" = "PENDING",
+  "COMPLETED" = "COMPLETED",
+  "APPROVED" = "APPROVED",
+  "CANCELLED" = "CANCELLED",
+}
+
+export const PharImportStatusLabel: Record<PharImportStatus, string> = {
+  [PharImportStatus.PENDING]: "Chưa xử lý",
+  [PharImportStatus.COMPLETED]: "Đã xử lý",
+  [PharImportStatus.APPROVED]: "Đã duyệt",
+  [PharImportStatus.CANCELLED]: "Đã huỷ",
+};
+
+export enum AppPermission {
+  CREATE_IMPORT_ORDER = "CREATE_IMPORT_ORDER",
+  APPROVED_IMPORT_ORDER = "APPROVED_IMPORT_ORDER",
+  VIEW_IMPORT_ORDER = "VIEW_IMPORT_ORDER",
+  PAYMENT = "PAYMENT",
+  PRESCRIPTION_PAYMENT = "PRESCRIPTION_PAYMENT",
+}

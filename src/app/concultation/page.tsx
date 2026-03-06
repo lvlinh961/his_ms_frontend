@@ -13,49 +13,38 @@ export default function Page() {
 
   return (
     <>
-      <fieldset className="w-full border border-border rounded-lg p-4 text-base gap-10">
-        <legend className="font-bold">Thông tin bệnh nhân</legend>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <div>
-            <p>
-              Tên bệnh nhân: <strong>{customerSelected?.patientName}</strong>
+      <div className="p-4">
+        <fieldset className="w-full border border-border rounded-lg p-4 bg-slate-50/50">
+          <legend className="font-bold px-2 text-blue-700 uppercase text-sm">
+            Thông tin bệnh nhân
+          </legend>
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <p className="text-sm">
+              Họ tên: <strong>{customerSelected?.patientName}</strong>
             </p>
-          </div>
-          <div>
-            <p>
+            <p className="text-sm">
               Ngày sinh:{" "}
               <strong>
                 {customerSelected &&
                   dateFormater.format(new Date(customerSelected.dateOfBirth))}
               </strong>
             </p>
-          </div>
-          <div>
-            <p>
+            <p className="text-sm">
               Giới tính:{" "}
               <strong>
                 {customerSelected?.gender == "MALE" ? "Nam" : "Nữ"}
               </strong>
             </p>
-          </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-          <div>
-            <p>
+            <p className="text-sm">
+              Mã BN: <strong>{customerSelected?.patientCode}</strong>
+            </p>
+            <p className="text-sm md:col-span-4">
               Địa chỉ: <strong>{customerSelected?.address}</strong>
             </p>
           </div>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-1 gap-6">
-          <div>
-            <p>
-              Lý do khám: <strong>{customerSelected?.reason}</strong>
-            </p>
-          </div>
-        </div>
-      </fieldset>
-      <Tabs defaultValue="service" className="flex flex-col w-full gap-6">
+        </fieldset>
+      </div>
+      <Tabs defaultValue="service" className="flex flex-col w-full p-4 gap-6">
         <TabsList className="flex w-full flex-row items-start bg-gray-100 p-0">
           <TabsTrigger
             value="service"

@@ -74,6 +74,7 @@ export interface CustomFormFieldProps {
   direction?: "row" | "col";
   labelWidth?: string;
   fieldWidth?: string;
+  options?: { id: string; name: string; code?: string }[];
   onChangeCustom?: (event?: any) => void;
 }
 

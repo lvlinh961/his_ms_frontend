@@ -3,7 +3,7 @@ import { NavItem } from "@/types";
 import AcceptSurgeryTicketForm from "@/components/surgery/AcceptSurgeryTicketForm";
 import SurgeryTicketForm from "@/components/surgery/SurgeryTicketForm";
 import ProcedureTicketForm from "@/components/surgery/ProcedureTicketForm";
-import SurgerySafetyCheckListForm from "@/components/surgery/SurgerySafetyCheckListForm";
+import { AppPermission } from "./enum";
 
 export const navItems: NavItem[] = [
   {
@@ -70,15 +70,55 @@ export const navItems: NavItem[] = [
       },
     ],
   },
-  // {
-  //   title: "Thu tiền",
-  //   href: "/cashier",
-  //   icon: "user",
-  //   label: "",
-  //   permission: "",
-  //   prefix: "cashier",
-  //   level: 1,
-  // },
+  {
+    title: "Kho dược",
+    href: "",
+    icon: "user",
+    label: "",
+    permission: "",
+    prefix: "drug-store",
+    level: 1,
+    childrens: [
+      {
+        title: "Nhập kho",
+        icon: "user",
+        href: "/drug-store/phar-import",
+        label: "",
+        permission: "VIEW_IMPORT_ORDER",
+        prefix: "/drug-store/phar-import",
+        level: 2,
+      },
+    ],
+  },
+  {
+    title: "Thu tiền",
+    href: "",
+    icon: "user",
+    label: "",
+    permission: AppPermission.PAYMENT,
+    prefix: "cashier",
+    level: 1,
+    childrens: [
+      // {
+      //   title: "Dịch vụ",
+      //   href: "/payment/service",
+      //   icon: "user",
+      //   label: "",
+      //   permission: AppPermission.CASHIER,
+      //   prefix: "cashier",
+      //   level: 2,
+      // },
+      {
+        title: "Toa thuốc",
+        href: "/payment/prescription",
+        icon: "user",
+        label: "",
+        permission: AppPermission.PRESCRIPTION_PAYMENT,
+        prefix: "cashier",
+        level: 2,
+      },
+    ],
+  },
   {
     title: "Report",
     href: "/report",

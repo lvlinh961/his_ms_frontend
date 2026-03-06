@@ -26,16 +26,21 @@ const medicationSchema = z.object({
   quantity: z.number(),
   hoatChat: z.string(),
   dongGoi: z.string(),
-  // price: z.preprocess(
-  //   (val) => (val === "" || val === null ? undefined : Number(val)),
-  //   z.number().optional()
-  // ),
+  price: z
+    .preprocess(
+      (val) => (val === "" || val === null ? undefined : Number(val)),
+      z.number().optional(),
+    )
+    .optional()
+    .nullable(),
   instruction: z.string(),
   deleted: z.boolean().optional(),
+  isSelected: z.boolean().optional(),
 });
 
-export const prescriptionSchema = z.object({
+export const PrescriptionSchema = z.object({
   prescriptionId: z.string().optional().nullable(),
+  pharStoreId: z.string().uuid().optional().nullable(),
   ticketId: z.string(),
   height: z.number(),
   weight: z.number(),
@@ -55,7 +60,7 @@ export const prescriptionSchema = z.object({
   listPrescriptionItem: z.array(medicationSchema).min(1),
 });
 
-export type PrescriptionSchema = z.infer<typeof prescriptionSchema>;
+export type Prescription = z.infer<typeof PrescriptionSchema>;
 
 export const defaultPrescription = {
   ticketId: "",
@@ -86,12 +91,12 @@ export const defaultPrescription = {
       quantity: 0,
       hoatChat: "",
       dongGoi: "",
-      // price: 0,
+      price: 0,
       instruction: "",
       deleted: false,
     },
   ],
-} satisfies PrescriptionSchema;
+} satisfies Prescription;
 
 export interface Icd10AutoSuggestItem {
   icd10Id: number;
@@ -151,6 +156,7 @@ export interface PrescriptionPrintItem {
   afternoon: number;
   evening: number;
   quantity: number;
+  price: number;
 }
 
 type PrescriptionItemPrintGroup = Record<string, PrescriptionPrintItem[]>;
@@ -219,7 +225,7 @@ export interface GetPayReceiptResponse {
 
 export interface GetPrescriptionByTicketResponse {
   code: number;
-  result?: PrescriptionSchema;
+  result?: Prescription;
   message?: string;
 }
 
