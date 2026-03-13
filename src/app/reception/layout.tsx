@@ -5,8 +5,8 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  title: "Next Shadcn Dashboard Starter",
-  description: "Basic dashboard with Next.js and Shadcn",
+  title: "Tiếp nhận bệnh nhân",
+  description: "Đăng ký khám bệnh cho bệnh nhân",
 };
 
 export default function DashboardLayout({

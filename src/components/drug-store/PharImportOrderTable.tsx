@@ -1,6 +1,6 @@
 import React from "react";
 import { PharImportOrderItem } from "./drug-store.schema";
-import { Eye, Edit, Trash2 } from "lucide-react"; // Dùng Lucide icon cho action
+import { Eye, Edit, Trash2, Pen } from "lucide-react"; // Dùng Lucide icon cho action
 import {
   AppPermission,
   PharImportStatus,
@@ -18,6 +18,7 @@ import {
 interface Props {
   results: PharImportOrderItem[] | null;
   onViewDetail: (id: string) => void;
+  onEdit: (id: string) => void;
   onApprove: (id: string) => void;
   onReject?: (id: string) => void;
 }
@@ -25,6 +26,7 @@ interface Props {
 export default function PharImportOrderTable({
   results,
   onViewDetail,
+  onEdit,
   onApprove,
   onReject,
 }: Props) {
@@ -108,6 +110,20 @@ export default function PharImportOrderTable({
                     >
                       <Eye size={18} />
                     </button>
+                    {item.status === PharImportStatus.PENDING && (
+                      <HasPermission
+                        permission={AppPermission.UPDATE_IMPORT_ORDER}
+                      >
+                        <button
+                          title="Chỉnh sửa"
+                          className="p-1 text-gray-400 hover:text-blue-600"
+                          onClick={() => onEdit(item.id)}
+                        >
+                          <Pen size={18} />
+                        </button>
+                      </HasPermission>
+                    )}
+
                     {item.status === PharImportStatus.PENDING && (
                       <HasPermission
                         permission={AppPermission.APPROVED_IMPORT_ORDER}

@@ -10,6 +10,10 @@ import {
   PrescriptionPreparePayment,
   PharPaymentRequest,
   PharInvoiceResponse,
+  DrugStore,
+  DrugStoreRequest,
+  DrugSupplier,
+  SearchSupplierResponse,
 } from "./drug-store.schema";
 
 const drugStoreApiRequest = {
@@ -32,6 +36,20 @@ const drugStoreApiRequest = {
     http.post<ApiResponseInterface<PharImportCreateRequest>>(
       "/drug-store/phar-import-order",
       data,
+    ),
+
+  updatePharImportOrder: (data: PharImportCreateRequest) =>
+    http.put<ApiResponseInterface<PharImportCreateRequest>>(
+      "/drug-store/phar-import-order",
+      data,
+    ),
+
+  createDrugStore: (data: DrugStoreRequest) =>
+    http.post<ApiResponseInterface<DrugStore>>("/drug-store/stores", data),
+
+  getListDugStore: (params: URLSearchParams) =>
+    http.get<ApiPagingResponseInterface<DrugStore[]>>(
+      "/drug-store/stores?" + params.toString(),
     ),
 
   searchStore: (params: URLSearchParams) =>
@@ -59,6 +77,22 @@ const drugStoreApiRequest = {
     http.post<ApiResponseInterface<PharInvoiceResponse>>(
       "/drug-store/payment/prescription/process",
       data,
+    ),
+
+  getListSupplier: (params: URLSearchParams) =>
+    http.get<ApiPagingResponseInterface<DrugSupplier[]>>(
+      "/drug-store/suppliers?" + params.toString(),
+    ),
+
+  saveSupplier: (data: DrugSupplier) =>
+    http.post<ApiResponseInterface<DrugSupplier>>(
+      "/drug-store/suppliers",
+      data,
+    ),
+
+  searchSupplier: (params: URLSearchParams) =>
+    http.get<ApiResponseInterface<SearchSupplierResponse[]>>(
+      "/drug-store/suppliers/search?" + params.toString(),
     ),
 };
 

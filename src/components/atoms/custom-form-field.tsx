@@ -69,7 +69,7 @@ const RenderInput = ({
                 const value =
                   e.target.value === "" ? undefined : Number(e.target.value);
                 field.onChange(value);
-                if (onChangeCustom) onChangeCustom;
+                if (onChangeCustom) onChangeCustom(value);
               }}
             />
           </FormControl>

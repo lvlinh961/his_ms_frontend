@@ -5,8 +5,8 @@ import type { Metadata } from "next";
 import "@/app/globals.css";
 
 export const metadata: Metadata = {
-  title: "Khám bệnh",
-  description: "Khám/Chữa bệnh - Ra y lệnh cho bệnh nhân",
+  title: "Quản trị hệ thống",
+  description: "Quản trị, cấu hình hệ thống",
 };
 
 export default function DashboardLayout({

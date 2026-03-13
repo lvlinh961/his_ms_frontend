@@ -1,4 +1,4 @@
-FROM node:20-alpine AS BASE
+FROM node:20-alpine AS base
 WORKDIR /app
 
 COPY package.json package-lock.json ./
@@ -9,7 +9,7 @@ RUN apk add --no-cache git \
     && npm ci --frozen-lockfile --legacy-peer-deps \
     && npm cache clean --force
 
-FROM node:20-alpine AS BUILD
+FROM node:20-alpine AS build
 WORKDIR /app
 COPY --from=BASE /app/node_modules ./node_modules
 COPY . .
@@ -25,7 +25,7 @@ RUN apk add --no-cache git curl \
     && node-prune
 
 
-FROM node:20-alpine AS PRODUCTION
+FROM node:20-alpine AS production
 WORKDIR /app
 
 ENV NODE_ENV=production

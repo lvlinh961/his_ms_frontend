@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Check, ChevronsUpDown } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, removeVietnameseTones } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -32,6 +32,9 @@ const SelectBoxSuggest = ({
   disabled,
 }: SelectBoxSuggestProps) => {
   const [open, setOpen] = useState(false);
+  const selectedOption = options.find(
+    (opt) => String(opt.id) === String(value),
+  );
 
   return (
     <Popover open={open} onOpenChange={setOpen} modal={true}>
@@ -45,9 +48,7 @@ const SelectBoxSuggest = ({
             !value && "text-muted-foreground",
           )}
         >
-          {value
-            ? options.find((opt) => opt.id === value)?.name
-            : placeholder || "Chọn..."}
+          {selectedOption ? selectedOption.name : placeholder || "Chọn..."}
           <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -55,7 +56,15 @@ const SelectBoxSuggest = ({
         className="w-[var(--radix-popover-trigger-width)] p-0 z-[9999]"
         align="start"
       >
-        <Command shouldFilter={true}>
+        <Command
+          shouldFilter={true}
+          filter={(value, search) => {
+            const normalizedValue = removeVietnameseTones(value);
+            const normalizedSearch = removeVietnameseTones(search);
+            if (normalizedValue.includes(normalizedSearch)) return 1;
+            return 0;
+          }}
+        >
           <CommandInput placeholder="Tìm kiếm..." />
           <CommandList>
             <CommandEmpty>Không tìm thấy dữ liệu.</CommandEmpty>

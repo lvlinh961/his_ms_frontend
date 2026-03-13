@@ -49,7 +49,7 @@ export function AutoSuggest<T extends { id?: string | number }>({
     if (isOpen && containerRef.current) {
       const rect = containerRef.current.getBoundingClientRect();
       const spaceBelow = window.innerHeight - rect.bottom;
-      setPosition(spaceBelow < 310 ? "top" : "bottom");
+      setPosition(spaceBelow < 450 ? "top" : "bottom");
     }
   }, [isOpen, suggestions.length]);
 
@@ -164,7 +164,7 @@ export function AutoSuggest<T extends { id?: string | number }>({
           )}
           style={{ position: "absolute" }}
         >
-          <div className="max-h-[300px] overflow-y-auto bg-white">
+          <div className="max-h-[400px] min-h-[150px] overflow-y-auto bg-white">
             {suggestions.map((item, index) => (
               <div
                 key={item.id}

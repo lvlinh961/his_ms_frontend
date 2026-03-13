@@ -458,6 +458,7 @@ export default function PrescriptionForm() {
               <MedicationRow
                 control={form.control}
                 setValue={form.setValue}
+                getValues={form.getValues}
                 unitOptions={units}
                 usageOptions={usages}
                 formState={form.formState}

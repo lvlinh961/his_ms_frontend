@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Filter, RotateCcw, Plus } from "lucide-react";
+import { Filter, RotateCcw, Plus, Warehouse } from "lucide-react";
 import {
   PharImportOrderSearchSchema,
   PharImportOrderSearchRequest,
@@ -111,94 +111,36 @@ export default function PharImportOrder() {
     setIsPharImportOrderFormDialogOpen(true);
   };
 
+  const handleEdit = (id: string) => {
+    setSelectedId(id);
+    setDialogMode("edit");
+    setIsPharImportOrderFormDialogOpen(true);
+  };
+
+  const handleFormOpenChange = (isOpen: boolean) => {
+    setSelectedId(null);
+    setDialogMode("create");
+    setIsPharImportOrderFormDialogOpen(isOpen);
+  };
+
   const handleOpenApprove = (id: string) => {
     setSelectedId(id);
     setIsApproveOpen(true);
   };
 
   return (
-    <div className="p-6 bg-white rounded-lg shadow-sm border">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Quản lý nhập kho dược
-        </h2>
-      </div>
-
-      {/* Form tìm kiếm */}
-      <form onSubmit={handleSubmit(fetchApi)} className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4">
-          {/* Keyword Search */}
-          {/* <div className="flex flex-col gap-1">
-            <div className="relative">
-              <input
-                {...register("keyword")}
-                placeholder="Mã phiếu, số hóa đơn..."
-                className="w-full pl-9 pr-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-              />
-            </div>
-          </div> */}
-
-          {/* Status Select */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Trạng thái</label>
-            <select
-              {...register("status")}
-              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none bg-white 
-             appearance-none min-h-[40px] leading-tight"
-            >
-              <option value="">Tất cả trạng thái</option>
-              {Object.values(PharImportStatus).map((status) => (
-                <option key={status} value={status}>
-                  {PharImportStatusLabel[status]}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          {/* From Date */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Từ ngày</label>
-            <input
-              type="date"
-              {...register("fromDate")}
-              className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none ${errors.fromDate ? "border-red-500" : "border-gray-300"}`}
-            />
-            {/* Hiển thị thông báo lỗi nếu có */}
-            {errors.fromDate && (
-              <span className="text-xs text-red-500 mt-1">
-                {errors.fromDate.message}
-              </span>
-            )}
-          </div>
-
-          {/* To Date */}
-          <div className="flex flex-col gap-1">
-            <label className="text-sm font-medium">Đến ngày</label>
-            <input
-              type="date"
-              {...register("toDate")}
-              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
-            />
-          </div>
+    <div className="p-6 space-y-6 bg-white rounded-lg shadow-sm border">
+      {/* SECTION: HEADER */}
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-2xl font-bold text-slate-800 flex items-center gap-2">
+            <Warehouse className="h-6 w-6 text-blue-600" />
+            Quản lý nhập kho dược
+          </h1>
+          <p className="text-sm text-slate-500 font-medium">
+            Nhập thuốc vào kho dược/ quầy thuốc
+          </p>
         </div>
-      </form>
-
-      {/* Nút điều khiển */}
-      <div className="flex justify-end gap-2 pt-2">
-        <button
-          type="button"
-          onClick={() => reset()}
-          className="flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-gray-50 transition-colors"
-        >
-          <RotateCcw className="h-4 w-4" /> Làm lại
-        </button>
-        <button
-          type="button"
-          className="flex items-center gap-2 px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
-          onClick={handleSubmit(fetchApi)}
-        >
-          <Filter className="h-4 w-4" /> Lọc kết quả
-        </button>
         <HasPermission
           permission={AppPermission.CREATE_IMPORT_ORDER}
           fallback={
@@ -223,7 +165,7 @@ export default function PharImportOrder() {
         >
           <PharImportOrderFormDialog
             open={isPharImportOrderFormDialogOpen}
-            onOpenChange={setIsPharImportOrderFormDialogOpen}
+            onOpenChange={handleFormOpenChange}
             onSuccess={() => {
               handleSubmit(fetchApi)();
             }}
@@ -233,9 +175,92 @@ export default function PharImportOrder() {
         </HasPermission>
       </div>
 
+      {/* Form tìm kiếm */}
+      <form
+        onSubmit={handleSubmit(fetchApi)}
+        className="flex flex-row items-end gap-4 w-full"
+      >
+        {/* <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-4"> */}
+        <div className="flex flex-1 gap-4">
+          {/* Keyword Search */}
+          {/* <div className="flex flex-col gap-1">
+            <div className="relative">
+              <input
+                {...register("keyword")}
+                placeholder="Mã phiếu, số hóa đơn..."
+                className="w-full pl-9 pr-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+              />
+            </div>
+          </div> */}
+
+          {/* Status Select */}
+          <div className="w-[200px] space-y-1.5">
+            <label className="text-sm font-medium">Trạng thái</label>
+            <select
+              {...register("status")}
+              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none bg-white 
+             appearance-none min-h-[40px] leading-tight"
+            >
+              <option value="">Tất cả trạng thái</option>
+              {Object.values(PharImportStatus).map((status) => (
+                <option key={status} value={status}>
+                  {PharImportStatusLabel[status]}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* From Date */}
+          <div className="w-[200px] space-y-1.5">
+            <label className="text-sm font-medium">Từ ngày</label>
+            <input
+              type="date"
+              {...register("fromDate")}
+              className={`w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none ${errors.fromDate ? "border-red-500" : "border-gray-300"}`}
+            />
+            {/* Hiển thị thông báo lỗi nếu có */}
+            {errors.fromDate && (
+              <span className="text-xs text-red-500 mt-1">
+                {errors.fromDate.message}
+              </span>
+            )}
+          </div>
+
+          {/* To Date */}
+          <div className="w-[200px] space-y-1.5">
+            <label className="text-sm font-medium">Đến ngày</label>
+            <input
+              type="date"
+              {...register("toDate")}
+              className="w-full px-3 py-2 border rounded-md focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+          </div>
+        </div>
+
+        {/* Nút điều khiển */}
+        <div className="flex justify-end items-end gap-2 pt-2">
+          <button
+            type="button"
+            onClick={() => reset()}
+            className="flex items-center gap-2 px-4 h-10 border rounded-md hover:bg-gray-50 transition-colors"
+          >
+            <RotateCcw className="h-4 w-4" /> Làm lại
+          </button>
+          <button
+            type="button"
+            className="flex items-center gap-2 px-6 py-2 h-10 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+            onClick={handleSubmit(fetchApi)}
+          >
+            <Filter className="h-4 w-4" /> Lọc kết quả
+          </button>
+        </div>
+        {/* </div> */}
+      </form>
+
       <PharImportOrderTable
         results={pharImportOrderData?.data}
         onViewDetail={handleViewDetail}
+        onEdit={handleEdit}
         onApprove={handleOpenApprove}
       />
 

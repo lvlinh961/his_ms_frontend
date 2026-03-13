@@ -198,7 +198,8 @@ export function DrugMaterialAutoSuggest({ onSelect, placeholder }: Props) {
                     {drug.code}
                   </span>
                   <span className="text-slate-500">
-                    ĐVT: <strong className="text-slate-700">{drug.unit}</strong>
+                    ĐVT:{" "}
+                    <strong className="text-slate-700">{drug.unitName}</strong>
                   </span>
                   {drug.manufacturer && (
                     <span className="text-slate-400 truncate flex-1 text-right">

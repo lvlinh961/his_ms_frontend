@@ -105,7 +105,7 @@ export default function PrescriptionPaymentForm() {
         storeId: data.storeId || "", // Lấy từ kết quả prepare payment
         note: "", // Có thể bổ sung input note vào UI nếu cần
         items: data.items
-          .filter((item) => item.isSelected) // Chỉ lấy các item được chọn
+          .filter((item) => item.isSelected && !item.paid) // Chỉ lấy các item được chọn
           .map((item) => {
             // Tìm lô đang được chọn trong danh sách availablePlots
             const selectedPlot = item.availablePlots?.find(

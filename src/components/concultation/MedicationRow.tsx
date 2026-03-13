@@ -3,13 +3,6 @@
 
 import { X } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import {
-  Select,
-  SelectTrigger,
-  SelectValue,
-  SelectContent,
-  SelectItem,
-} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { cn, formatCurrency, handleErrorApi } from "@/lib/utils";
 import {
@@ -18,26 +11,22 @@ import {
   UseFormSetValue,
   useWatch,
   FormState,
+  UseFormGetValues,
 } from "react-hook-form";
-import consultationApiRequest from "./consultationApiRequest";
 import { FormControl, FormField, FormItem, FormLabel } from "../ui/form";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { useToast } from "@/components/ui/use-toast";
-import { Card, CardContent } from "../ui/card";
-import {
-  DrugMaterialSuggestItem,
-  ItemUnit,
-  ItemUsage,
-} from "./consultation.shema";
+import { ItemUnit, ItemUsage } from "./consultation.shema";
 import { useAppContext } from "@/providers/app-proviceders";
 import drugStoreApiRequest from "../drug-store/drugStoreApiRequest";
 import { AutoSuggest } from "../ui/AutoSuggest";
 import { DrugStockSuggest } from "../drug-store/drug-store.schema";
-import { HttpStatus } from "@/constants/enum";
+import { FormFieldType, HttpStatus } from "@/constants/enum";
+import CustomFormField from "../atoms/custom-form-field";
 
 interface MedicationRowProp {
   control: Control<any>;
   setValue: UseFormSetValue<any>;
+  getValues: UseFormGetValues<any>;
   unitOptions: ItemUnit[];
   usageOptions: ItemUsage[];
   formState: FormState<any>;
@@ -47,6 +36,7 @@ interface MedicationRowProp {
 export default function MedicationRow({
   control,
   setValue,
+  getValues,
   unitOptions,
   usageOptions,
   formState,
@@ -56,11 +46,6 @@ export default function MedicationRow({
     control,
     name: "listPrescriptionItem",
   });
-  const [drugMaterials, setDrugMaterials] = useState<DrugMaterialSuggestItem[]>(
-    [],
-  );
-  const [openIndex, setOpenIndex] = useState<number | null>(null);
-  const { toast } = useToast();
   const listPresItems = useWatch({ control, name: "listPrescriptionItem" });
   const { currentStore } = useAppContext();
   const storeRef = useRef(currentStore);
@@ -68,22 +53,6 @@ export default function MedicationRow({
   useEffect(() => {
     storeRef.current = currentStore;
   }, [currentStore]);
-
-  // const fetchDrugMaterial = async (query: string) => {
-  //   if (!query) return setDrugMaterials([]);
-
-  //   try {
-  //     const res =
-  //       await consultationApiRequest.getDrugMaterialAutoSuggest(query);
-  //     setDrugMaterials(res.payload.result);
-  //   } catch (error) {
-  //     toast({
-  //       title: "Lỗi",
-  //       variant: "destructive",
-  //       description: "Không thể lấy danh sách ICD10",
-  //     });
-  //   }
-  // };
 
   const fetchDrugsForPrescription = async (query: string) => {
     const activeStore = storeRef.current;
@@ -123,7 +92,28 @@ export default function MedicationRow({
     });
   };
 
-  // const debouncedFetch = useCallback(fetchDrugMaterial, []);
+  const onDrugMaterialSelect = (index: number, drug: DrugStockSuggest) => {
+    // Fill toàn bộ thông tin vào dòng đơn thuốc
+    setValue(`listPrescriptionItem.${index}.drugId`, drug.drugMaterialId);
+    setValue(`listPrescriptionItem.${index}.drugName`, drug.name);
+    setValue(`listPrescriptionItem.${index}.hoatChat`, drug.hoatChat || "");
+    setValue(`listPrescriptionItem.${index}.unit`, drug.usageUnitId);
+    setValue(`listPrescriptionItem.${index}.sellingUnit`, drug.unitId);
+    setValue(`listPrescriptionItem.${index}.price`, drug.sellPrice);
+    setValue(`listPrescriptionItem.${index}.usage`, drug.usageId);
+
+    // Tự động tính toán số lượng hoặc focus ô tiếp theo
+    countQuantity(index);
+
+    // Logic focus vào ô số lượng (giả sử ô tiếp theo là quantity)
+    setTimeout(() => {
+      const nextInput = document.getElementsByName(
+        `listPrescriptionItem.${index}.morning`,
+      )[0] as HTMLInputElement;
+      nextInput?.focus();
+    }, 100);
+  };
+
   const debounceFetchDrugsForPrescription = useCallback(
     fetchDrugsForPrescription,
     [],
@@ -142,74 +132,6 @@ export default function MedicationRow({
               {/* Drug Index */}
               <div className="text-center font-semibold">{displayOrder}.</div>
               {/* Tên thuốc */}
-              {/* <FormField
-                control={control}
-                name={`listPrescriptionItem.${index}.drugName`}
-                render={({ field }) => (
-                  <FormControl>
-                    <div className="relative">
-                      <Input
-                        {...field}
-                        onChange={(e) => {
-                          field.onChange(e);
-                          debouncedFetch(e.target.value);
-                          setOpenIndex(index);
-                        }}
-                        placeholder="Tên thuốc"
-                        autoComplete="off"
-                      />
-                      {drugMaterials.length > 0 && openIndex == index && (
-                        <Card className="absolute z-10 w-full mt-1">
-                          <CardContent className="p-1 space-y-1 max-h-60 overflow-y-auto">
-                            {drugMaterials.map((drug, idx) => (
-                              <div
-                                key={idx}
-                                onClick={() => {
-                                  setValue(
-                                    `listPrescriptionItem.${index}.drugId`,
-                                    drug.drugId
-                                  );
-                                  setValue(
-                                    `listPrescriptionItem.${index}.drugName`,
-                                    drug.drugName
-                                  );
-                                  setValue(
-                                    `listPrescriptionItem.${index}.hoatChat`,
-                                    drug.drugOriginalName
-                                  );
-                                  setValue(
-                                    `listPrescriptionItem.${index}.dongGoi`,
-                                    drug.dongGoi
-                                  );
-                                  setValue(
-                                    `listPrescriptionItem.${index}.usage`,
-                                    drug.usage
-                                  );
-                                  setValue(
-                                    `listPrescriptionItem.${index}.unit`,
-                                    drug.unit
-                                  );
-                                  setValue(
-                                    `listPrescriptionItem.${index}.sellingUnit`,
-                                    drug.unit
-                                  );
-                                  countQuantity(index);
-                                  setOpenIndex(null);
-                                  setDrugMaterials([]);
-                                }}
-                                className="cursor-pointer px-2 py-1 hover:bg-muted rounded"
-                              >
-                                {drug.drugName}
-                              </div>
-                            ))}
-                          </CardContent>
-                        </Card>
-                      )}
-                    </div>
-                  </FormControl>
-                )}
-              /> */}
-
               <FormField
                 control={control}
                 name={`listPrescriptionItem.${index}.drugName`}
@@ -221,44 +143,7 @@ export default function MedicationRow({
                         value={(field.value as unknown as string) || ""}
                         fetchData={debounceFetchDrugsForPrescription}
                         getDisplayValue={(item) => item.name}
-                        onSelect={(drug) => {
-                          // Fill toàn bộ thông tin vào dòng đơn thuốc
-                          setValue(
-                            `listPrescriptionItem.${index}.drugId`,
-                            drug.drugMaterialId,
-                          );
-                          setValue(
-                            `listPrescriptionItem.${index}.drugName`,
-                            drug.name,
-                          );
-                          setValue(
-                            `listPrescriptionItem.${index}.hoatChat`,
-                            drug.hoatChat || "",
-                          );
-                          setValue(
-                            `listPrescriptionItem.${index}.unit`,
-                            drug.unit,
-                          );
-                          setValue(
-                            `listPrescriptionItem.${index}.sellingUnit`,
-                            drug.unit,
-                          );
-                          setValue(
-                            `listPrescriptionItem.${index}.price`,
-                            drug.sellPrice,
-                          );
-
-                          // Tự động tính toán số lượng hoặc focus ô tiếp theo
-                          countQuantity(index);
-
-                          // Logic focus vào ô số lượng (giả sử ô tiếp theo là quantity)
-                          setTimeout(() => {
-                            const nextInput = document.getElementsByName(
-                              `listPrescriptionItem.${index}.morning`,
-                            )[0] as HTMLInputElement;
-                            nextInput?.focus();
-                          }, 100);
-                        }}
+                        onSelect={(drug) => onDrugMaterialSelect(index, drug)}
                         renderItem={(item) => (
                           <div
                             className={cn(
@@ -292,7 +177,7 @@ export default function MedicationRow({
                                     : "text-red-500",
                                 )}
                               >
-                                Tồn: {item.availableQuantity} {item.unit}
+                                Tồn: {item.availableQuantity} {item.unitName}
                               </span>
                             </div>
                           </div>
@@ -304,57 +189,29 @@ export default function MedicationRow({
               />
 
               {/* C.DÙNG */}
-              <FormField
+              <CustomFormField
+                fieldType={FormFieldType.SELECT_SUGGEST}
                 control={control}
                 name={`listPrescriptionItem.${index}.usage`}
-                render={({ field }) => (
-                  <FormControl>
-                    <div className="relative">
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Dùng" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {usageOptions.map((option, index) => (
-                            <SelectItem key={index} value={option.id}>
-                              {option.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </FormControl>
-                )}
+                placeholder="Cách dùng"
+                options={usageOptions.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  code: s.code,
+                }))}
               />
 
               {/* ĐVSD */}
-              <FormField
+              <CustomFormField
+                fieldType={FormFieldType.SELECT_SUGGEST}
                 control={control}
                 name={`listPrescriptionItem.${index}.unit`}
-                render={({ field }) => (
-                  <FormControl>
-                    <div className="relative">
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="ĐV" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitOptions.map((option, index) => (
-                            <SelectItem key={index} value={option.id}>
-                              {option.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </FormControl>
-                )}
+                placeholder="ĐV Sử dụng"
+                options={unitOptions.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  code: s.code,
+                }))}
               />
 
               {/* Dosage per time of day */}
@@ -440,28 +297,16 @@ export default function MedicationRow({
                   )}
                 />
                 <div></div>
-                <FormField
+                <CustomFormField
+                  fieldType={FormFieldType.SELECT_SUGGEST}
                   control={control}
                   name={`listPrescriptionItem.${index}.sellingUnit`}
-                  render={({ field }) => (
-                    <div className="relative">
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <SelectTrigger className="w-20">
-                          <SelectValue placeholder="Viên" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {unitOptions.map((option, index) => (
-                            <SelectItem key={index} value={option.id}>
-                              {option.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  )}
+                  placeholder="ĐV bán"
+                  options={unitOptions.map((s) => ({
+                    id: s.id,
+                    name: s.name,
+                    code: s.code,
+                  }))}
                 />
               </div>
 
@@ -481,7 +326,16 @@ export default function MedicationRow({
 
             <div className="grid grid-cols-2 items-center gap-2">
               <div className="col-span-1 pl-10">
-                <p>Thuốc gốc: {listPresItems?.[index]?.hoatChat}</p>
+                <div className="flex flex-row items-start text-left">
+                  <div className="w-[150px]">Thuốc gốc:</div>
+                  <div
+                    className="flex truncate items-start justify-start text-left"
+                    title={listPresItems?.[index]?.hoatChat || ""} // Hiện tooltip khi di chuột vào
+                  >
+                    {listPresItems?.[index]?.hoatChat || "---"}
+                  </div>
+                </div>
+                {/* <p>Thuốc gốc: {listPresItems?.[index]?.hoatChat}</p> */}
                 <p>Đóng gói: {listPresItems?.[index]?.dongGoi}</p>
               </div>
               {/* Instruction note */}
@@ -515,7 +369,9 @@ export default function MedicationRow({
         <FormLabel className="w-4"></FormLabel>
         <Button
           type="button"
-          onClick={() =>
+          onClick={() => {
+            const firstItemTime = getValues(`listPrescriptionItem.0.time`) ?? 1;
+
             append({
               drugId: 0,
               drugName: "",
@@ -526,14 +382,14 @@ export default function MedicationRow({
               noon: 0,
               afternoon: 0,
               evening: 0,
-              time: 0,
+              time: firstItemTime,
               quantity: 0,
               hoatChat: "",
               dongGoi: "",
               instruction: "",
               deleted: false,
-            })
-          }
+            });
+          }}
         >
           Thêm thuốc
         </Button>

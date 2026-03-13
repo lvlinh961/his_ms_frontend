@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import {
   Dialog,
   DialogContent,
@@ -15,6 +15,7 @@ import {
   pharImportDefaultValues,
   DrugMaterialSuggest,
   SearchStoreResponse,
+  SearchSupplierResponse,
 } from "./drug-store.schema";
 import { useFieldArray, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -26,17 +27,17 @@ import {
   HttpStatus,
   PharImportStatus,
 } from "@/constants/enum";
-import { SelectItem } from "../ui/select";
 import { Button } from "../ui/button";
-import { cn, handleErrorApi } from "@/lib/utils";
+import { formatCurrency, handleErrorApi } from "@/lib/utils";
 import { AutoSuggest } from "../ui/AutoSuggest";
 import drugStoreApiRequest from "./drugStoreApiRequest";
 import { useAppContext } from "@/providers/app-proviceders";
 import { useToast } from "../ui/use-toast";
 import { logger } from "@/lib/logger";
-import { on } from "events";
 import { HasPermission } from "../auth/HasPermission";
 import { ApproveImportOrderDialog } from "./ApprovePharImportOrderDialog";
+import { ItemUnit } from "../concultation/consultation.shema";
+import consultationApiRequest from "../concultation/consultationApiRequest";
 
 interface Props {
   open: boolean;
@@ -61,7 +62,11 @@ export default function PharImportOrderFormDialog({
   const { setLoadingOverlay } = useAppContext();
   const { toast } = useToast();
   const [stores, setStores] = useState<SearchStoreResponse[]>([]);
+  const [suppliers, setSuppliers] = useState<SearchSupplierResponse[]>([]);
+  const [units, setUnits] = useState<ItemUnit[]>([]);
   const isViewMode = mode === "view";
+  const isCreateMode = mode === "create";
+  const isEditMode = mode === "edit";
   const [isApproveConfirmOpen, setIsApproveConfirmOpen] = useState(false);
 
   const { fields, append, remove } = useFieldArray({
@@ -69,6 +74,13 @@ export default function PharImportOrderFormDialog({
     name: "details",
   });
 
+  // Chỉ watch các giá trị tổng để UI cập nhật khi setValue được gọi
+  const totalRaw = form.watch("subTotal") || 0;
+  const totalVat = form.watch("vatAmount") || 0;
+  const totalAfterVat = form.watch("totalAfterVat") || 0;
+  const finalAmount = form.watch("totalAmount") || 0;
+
+  // Lấy danh sách kho, nhà cung cấp
   useEffect(() => {
     const fetchStores = async () => {
       const params = new URLSearchParams();
@@ -79,9 +91,37 @@ export default function PharImportOrderFormDialog({
       setStores(res.payload.result);
     };
 
+    const fetchSupplier = async () => {
+      const params = new URLSearchParams();
+
+      params.append("keyword", "");
+      params.append("active", String(true));
+      const res = await drugStoreApiRequest.searchSupplier(params);
+      setSuppliers(res.payload.result);
+    };
+
+    const fetchUnits = async () => {
+      try {
+        const res = await consultationApiRequest.getListItemUnit();
+
+        if (res.status == 200) {
+          setUnits(res.payload.result);
+        }
+      } catch (error) {
+        toast({
+          title: "Lỗi",
+          variant: "destructive",
+          description: "Không thể lấy danh mục dùng chung!",
+        });
+      }
+    };
+
     fetchStores();
+    fetchSupplier();
+    fetchUnits();
   }, []);
 
+  // Lấy thông tin phiếu nhập trong trường hợp chỉnh sửa
   useEffect(() => {
     if (open && id) {
       const fetchDetail = async () => {
@@ -111,12 +151,13 @@ export default function PharImportOrderFormDialog({
   const onSubmit = async (data: PharImportCreateRequest) => {
     setLoadingOverlay(true);
 
-    if (form.formState.errors) {
-      // logger.error("Submit PharImportOrder error: ", form.formState.errors);
-    }
-
     try {
-      const res = await drugStoreApiRequest.createPharImportOrder(data);
+      let res;
+      if (!data.id) {
+        res = await drugStoreApiRequest.createPharImportOrder(data);
+      } else {
+        res = await drugStoreApiRequest.updatePharImportOrder(data);
+      }
 
       if (res.status == HttpStatus.SUCCESS) {
         toast({
@@ -136,6 +177,127 @@ export default function PharImportOrderFormDialog({
   const handleApproveSuccess = () => {
     onSuccess(); // Thông báo cho trang danh sách load lại data
     onOpenChange(false); // Đóng luôn cả Dialog chi tiết này
+  };
+
+  const handlePriceChange = (
+    index: number,
+    fieldName: string,
+    value: number,
+  ) => {
+    // --- BƯỚC 1: TÍNH TOÁN CHO DÒNG HIỆN TẠI ---
+    const row = form.getValues(`details.${index}`);
+
+    const importPrice =
+      fieldName === "importPrice" ? value : Number(row.importPrice) || 0;
+    const vatPercent =
+      fieldName === "vatPercent" ? value : Number(row.vatPercent) || 0;
+    const markupPercent =
+      fieldName === "markupPercent" ? value : Number(row.markupPercent) || 0;
+    const quantity =
+      fieldName === "quantity" ? value : Number(row.quantity) || 0;
+
+    const vatAmount = importPrice * (vatPercent / 100);
+    const afterVatAmount = importPrice + vatAmount;
+    const salePrice = Math.round(afterVatAmount * (1 + markupPercent / 100));
+    const lineTotal = Math.round(afterVatAmount * quantity);
+
+    // Cập nhật giá trị dòng
+    form.setValue(`details.${index}.vatAmount`, vatAmount);
+    form.setValue(`details.${index}.sellPrice`, salePrice);
+    form.setValue(`details.${index}.lineTotal`, lineTotal);
+    form.setValue(`details.${index}.afterVatAmount`, afterVatAmount);
+
+    // --- BƯỚC 2: TÍNH TOÁN TỔNG TOÀN PHIẾU (GRAND TOTAL) ---
+    // Lấy toàn bộ mảng details sau khi đã được cập nhật giá trị mới nhất
+    const allDetails = form.getValues("details");
+    const discountAmount = Number(form.getValues("discountAmount")) || 0;
+
+    let totalRaw = 0; // Tổng tiền hàng chưa VAT
+    let totalVat = 0; // Tổng tiền thuế
+
+    allDetails.forEach((item, idx) => {
+      // Lưu ý: Lấy giá trị vừa tính toán cho dòng hiện tại, các dòng khác lấy từ form
+      const isCurrentRow = idx === index;
+      const itemPrice = isCurrentRow
+        ? importPrice
+        : Number(item.importPrice) || 0;
+      const itemQty = isCurrentRow ? quantity : Number(item.quantity) || 0;
+      const itemVat = isCurrentRow ? vatAmount : Number(item.vatAmount) || 0;
+
+      totalRaw += itemPrice * itemQty;
+      totalVat += itemVat * itemQty;
+    });
+
+    const totalAfterVat = totalRaw + totalVat;
+    const finalAmount = totalAfterVat - discountAmount;
+
+    // Cập nhật các trường tổng vào Form State để hiển thị lên UI
+    form.setValue("subTotal", totalRaw);
+    form.setValue("vatAmount", totalVat);
+    form.setValue("totalAfterVat", totalAfterVat);
+    form.setValue("totalAmount", finalAmount); // Đây là trường lưu xuống DB
+  };
+
+  const applyGlobalSettings = (
+    fieldName: "vatPercent" | "markupPercent",
+    globalValue: number,
+  ) => {
+    const details = form.getValues("details") || [];
+
+    details.forEach((item, index) => {
+      // Lấy các giá trị hiện tại của dòng
+      const importPrice = Number(item.importPrice) || 0;
+      const quantity = Number(item.quantity) || 0;
+
+      // Nếu field thay đổi là VAT, lấy markup cũ của dòng và ngược lại
+      const vatPercent =
+        fieldName === "vatPercent" ? globalValue : Number(item.vatPercent) || 0;
+      const markupPercent =
+        fieldName === "markupPercent"
+          ? globalValue
+          : Number(item.markupPercent) || 0;
+
+      // Tính toán lại theo công thức đã thống nhất
+      const vatAmount = importPrice * (vatPercent / 100);
+      const afterVatAmount = importPrice + vatAmount;
+      const salePrice = Math.round(afterVatAmount * (1 + markupPercent / 100));
+      const lineTotal = Math.round(afterVatAmount * quantity);
+
+      // Cập nhật từng dòng
+      form.setValue(`details.${index}.vatPercent`, vatPercent);
+      form.setValue(`details.${index}.markupPercent`, markupPercent);
+      form.setValue(`details.${index}.vatAmount`, vatAmount);
+      form.setValue(`details.${index}.afterVatAmount`, afterVatAmount);
+      form.setValue(`details.${index}.sellPrice`, salePrice);
+      form.setValue(`details.${index}.lineTotal`, lineTotal);
+    });
+
+    // Sau khi cập nhật các dòng, tính lại tổng tiền toàn phiếu
+    recalculateGrandTotal();
+  };
+
+  // Hàm tính tổng toàn phiếu (tách riêng để dùng chung)
+  const recalculateGrandTotal = () => {
+    const details = form.getValues("details") || [];
+    const discountAmount = Number(form.getValues("discountAmount")) || 0;
+
+    let totalRaw = 0;
+    let totalVat = 0;
+
+    details.forEach((item) => {
+      const price = Number(item.importPrice) || 0;
+      const qty = Number(item.quantity) || 0;
+      const vat = (Number(item.vatAmount) || 0) * qty;
+
+      totalRaw += price * qty;
+      totalVat += vat;
+    });
+
+    const totalAfterVat = totalRaw + totalVat;
+    form.setValue("subTotal", totalRaw);
+    form.setValue("vatAmount", totalVat);
+    form.setValue("totalAfterVat", totalAfterVat);
+    form.setValue("totalAmount", totalAfterVat - discountAmount);
   };
 
   return (
@@ -177,17 +339,18 @@ export default function PharImportOrderFormDialog({
                 disabled={isViewMode}
               />
               <CustomFormField
-                fieldType={FormFieldType.SELECT}
+                fieldType={FormFieldType.SELECT_SUGGEST}
                 control={form.control}
                 name="supplierId"
                 label="Nhà cung cấp"
                 placeholder="Chọn nhà cung cấp"
-              >
-                <SelectItem value="2a281867-0c5a-495d-8547-66a908a86789">
-                  Công ty Dược phẩm A
-                </SelectItem>
-                <SelectItem value="other">Nhà cung cấp khác</SelectItem>
-              </CustomFormField>
+                options={suppliers.map((s) => ({
+                  id: s.id,
+                  name: s.name,
+                  code: s.code,
+                }))}
+                disabled={isViewMode}
+              />
 
               <CustomFormField
                 fieldType={FormFieldType.INPUT}
@@ -219,6 +382,26 @@ export default function PharImportOrderFormDialog({
                 label="Tổng chiết khấu hóa đơn"
               />
 
+              <CustomFormField
+                fieldType={FormFieldType.NUMBER}
+                control={form.control}
+                name="vatPercent"
+                label="VAT tổng hóa đơn (%)"
+                onChangeCustom={(val) =>
+                  applyGlobalSettings("vatPercent", Number(val))
+                }
+              />
+
+              <CustomFormField
+                fieldType={FormFieldType.NUMBER}
+                control={form.control}
+                name="markupPercent"
+                label="% Thặng số áp dụng chung"
+                onChangeCustom={(val) =>
+                  applyGlobalSettings("markupPercent", Number(val))
+                }
+              />
+
               <div className="md:col-span-3">
                 <CustomFormField
                   fieldType={FormFieldType.TEXTAREA}
@@ -227,6 +410,46 @@ export default function PharImportOrderFormDialog({
                   label="Ghi chú phiếu nhập"
                   placeholder="Nhập ghi chú..."
                 />
+              </div>
+            </div>
+
+            {/* KHU VỰC HIỂN THỊ TỔNG TIỀN (NEW) */}
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 pt-4 border-t border-slate-200">
+              <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-bold text-slate-500 uppercase">
+                  Tổng tiền hàng (Chưa VAT)
+                </p>
+                <p className="text-lg font-semibold text-slate-700">
+                  {/* {totalRaw.toLocaleString()}đ */}
+                  {formatCurrency(totalRaw)}
+                </p>
+              </div>
+
+              <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-bold text-slate-500 uppercase">
+                  Tổng tiền thuế VAT
+                </p>
+                <p className="text-lg font-semibold text-amber-600">
+                  +{formatCurrency(totalVat)}
+                </p>
+              </div>
+
+              <div className="bg-white p-3 rounded-lg border border-slate-200 shadow-sm">
+                <p className="text-[10px] font-bold text-slate-500 uppercase">
+                  Tổng sau thuế (Sau VAT)
+                </p>
+                <p className="text-lg font-semibold text-slate-700">
+                  {formatCurrency(totalAfterVat)}
+                </p>
+              </div>
+
+              <div className="bg-blue-600 p-3 rounded-lg border border-blue-700 shadow-md">
+                <p className="text-[10px] font-bold text-blue-100 uppercase">
+                  Tổng tiền thanh toán
+                </p>
+                <p className="text-xl font-bold text-white leading-tight">
+                  {formatCurrency(finalAmount)}
+                </p>
               </div>
             </div>
 
@@ -240,150 +463,259 @@ export default function PharImportOrderFormDialog({
                   type="button"
                   variant="outline"
                   size="sm"
-                  onClick={() => append(pharImportDefaultValues.details[0])}
+                  onClick={() => {
+                    const newDetail = {
+                      ...pharImportDefaultValues.details[0],
+                      vatPercent: form.getValues("vatPercent"),
+                      markupPercent: form.getValues("markupPercent"),
+                    };
+                    append(newDetail);
+                  }}
                 >
                   <Plus className="h-4 w-4 mr-1" /> Thêm dòng
                 </Button>
               </div>
 
               <div className="border rounded-md">
-                <table className="w-full text-sm">
+                <table className="w-full text-sm border-collapse">
                   <thead className="bg-slate-100 sticky top-0 z-10">
-                    <tr className="border-b">
-                      <th className="p-2 text-left w-[250px]">
+                    <tr className="border-b text-slate-600">
+                      <th className="p-2 text-left w-[300px]">
                         Tên thuốc/Vật tư
                       </th>
-                      <th className="p-2 text-left w-[120px]">Đơn vị</th>
-                      <th className="p-2 text-left w-[100px]">Số lượng</th>
-                      <th className="p-2 text-left w-[140px]">Giá nhập</th>
-                      <th className="p-2 text-left w-[120px]">Số lô</th>
-                      <th className="p-2 text-left w-[150px]">
-                        Hạn dùng (DD/MM/YYYY)
+                      <th className="p-2 text-left w-[100px]">Đơn vị</th>
+                      <th className="p-2 text-left w-[80px]">SL</th>
+                      <th className="p-2 text-left w-[120px]">Giá nhập</th>
+                      <th className="p-2 text-left w-[80px]">VAT%</th>
+                      <th className="p-2 text-left w-[80px]">Thặng số%</th>
+                      <th className="p-2 text-left w-[130px] text-blue-700">
+                        Giá bán lẻ
                       </th>
-                      <th className="p-2 text-center w-[80px]">Bán?</th>
-                      <th className="p-2 text-center w-[50px]"></th>
+                      <th className="p-2 text-left w-[120px]">Số lô</th>
+                      <th className="p-2 text-left w-[140px]">Hạn dùng</th>
+                      <th className="p-2 text-center w-[40px]"></th>
                     </tr>
                   </thead>
                   <tbody>
-                    {fields.map((field, index) => (
-                      <tr
-                        key={field.id}
-                        className={cn(
-                          "border-b transition-colors relative", // Các class cơ bản
-                          "hover:bg-slate-50/50", // Hiệu ứng hover
-                          "z-[1] focus-within:z-[50]", // Logic Stacking Context quan trọng
-                        )}
-                      >
-                        <td className="p-2 w-[350px] relative focus-within:z-[50]">
-                          <AutoSuggest<DrugMaterialSuggest>
-                            value={
-                              (form.watch(
-                                `details.${index}.drugMaterialName`,
-                              ) as string) || ""
-                            }
-                            fetchData={fetchAutoSuggest}
-                            getDisplayValue={(item) => item.name}
-                            onSelect={(drug: DrugMaterialSuggest) => {
-                              logger.info("Chọn thuốc", drug);
-                              // Tự động điền thông tin khi chọn thuốc
-                              form.setValue(
-                                `details.${index}.drugMaterialId`,
-                                String(drug.id),
-                              );
-                              form.setValue(
-                                `details.${index}.note`,
-                                drug.hoatChat || "",
-                              );
-                              // Nếu có logic map đơn vị tính:
-                              // form.setValue(`details.${index}.unitId`, drug.unit);
-                              setTimeout(() => {
-                                const qtyInput = document.getElementsByName(
-                                  `details.${index}.quantity`,
-                                )[0] as HTMLInputElement;
-                                qtyInput?.focus();
-                                qtyInput?.select(); // Bôi đen để gõ đè số lượng cũ nhanh hơn
-                              }, 100);
-                            }}
-                            renderItem={(item) => (
-                              <div className="flex flex-col py-0.5">
-                                <div className="font-bold text-sm text-blue-900 leading-snug">
-                                  {item.name}
+                    {fields.map((field, index) => {
+                      // Lắng nghe các giá trị tính toán để hiển thị ở dòng phụ
+                      const rowData = form.watch(`details.${index}`);
+
+                      return (
+                        <React.Fragment key={field.id}>
+                          {/* DÒNG 1: NHẬP LIỆU CHÍNH */}
+                          <tr className="border-t transition-colors hover:bg-slate-50/30">
+                            <td className="p-2 relative">
+                              <AutoSuggest<DrugMaterialSuggest>
+                                value={
+                                  (form.watch(
+                                    `details.${index}.drugMaterialName`,
+                                  ) as string) || ""
+                                }
+                                fetchData={fetchAutoSuggest}
+                                getDisplayValue={(item) => item.name}
+                                onSelect={(drug: DrugMaterialSuggest) => {
+                                  form.setValue(
+                                    `details.${index}.drugMaterialId`,
+                                    drug.id,
+                                  );
+                                  form.setValue(
+                                    `details.${index}.drugMaterialName`,
+                                    drug.name,
+                                  );
+                                  form.setValue(
+                                    `details.${index}.unitId`,
+                                    drug.unitId,
+                                  );
+                                  form.setValue(
+                                    `details.${index}.note`,
+                                    drug.hoatChat || "",
+                                  );
+
+                                  setTimeout(() => {
+                                    const qtyInput = document.getElementsByName(
+                                      `details.${index}.quantity`,
+                                    )[0] as HTMLInputElement;
+                                    qtyInput?.focus();
+                                    qtyInput?.select();
+                                  }, 100);
+                                }}
+                                renderItem={(item) => (
+                                  <div className="flex flex-col py-0.5">
+                                    <div className="font-bold text-sm text-blue-900 leading-snug">
+                                      {item.name}
+                                    </div>
+                                    <div className="text-[10px] flex items-center gap-2 mt-1">
+                                      <span className="bg-blue-50 text-blue-600 px-1 rounded font-mono border border-blue-100">
+                                        {item.code}
+                                      </span>
+                                      <span className="text-slate-500 italic truncate max-w-[200px]">
+                                        {item.hoatChat}
+                                      </span>
+                                      <span className="ml-auto text-slate-400">
+                                        ĐVT: {item.unitName}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              />
+                            </td>
+                            <td className="p-1">
+                              <CustomFormField
+                                fieldType={FormFieldType.SELECT_SUGGEST}
+                                control={form.control}
+                                name={`details.${index}.unitId`}
+                                options={units.map((s) => ({
+                                  id: String(s.id),
+                                  name: s.name,
+                                  code: s.code,
+                                }))}
+                              />
+                            </td>
+                            <td className="p-1">
+                              <CustomFormField
+                                fieldType={FormFieldType.NUMBER}
+                                control={form.control}
+                                name={`details.${index}.quantity`}
+                                onChangeCustom={(val) =>
+                                  handlePriceChange(
+                                    index,
+                                    "quantity",
+                                    Number(val),
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="p-1">
+                              <CustomFormField
+                                fieldType={FormFieldType.NUMBER}
+                                control={form.control}
+                                name={`details.${index}.importPrice`}
+                                onChangeCustom={(val) =>
+                                  handlePriceChange(
+                                    index,
+                                    "importPrice",
+                                    Number(val),
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="p-1">
+                              <CustomFormField
+                                fieldType={FormFieldType.NUMBER}
+                                control={form.control}
+                                name={`details.${index}.vatPercent`}
+                                onChangeCustom={(val) =>
+                                  handlePriceChange(
+                                    index,
+                                    "vatPercent",
+                                    Number(val),
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="p-1">
+                              <CustomFormField
+                                fieldType={FormFieldType.NUMBER}
+                                control={form.control}
+                                name={`details.${index}.markupPercent`}
+                                onChangeCustom={(val) =>
+                                  handlePriceChange(
+                                    index,
+                                    "markupPercent",
+                                    Number(val),
+                                  )
+                                }
+                              />
+                            </td>
+                            <td className="p-1">
+                              <CustomFormField
+                                fieldType={FormFieldType.NUMBER}
+                                control={form.control}
+                                name={`details.${index}.sellPrice`}
+                              />
+                            </td>
+                            <td className="p-1">
+                              <CustomFormField
+                                fieldType={FormFieldType.INPUT}
+                                control={form.control}
+                                name={`details.${index}.plotNumber`}
+                              />
+                            </td>
+                            <td className="p-1">
+                              <CustomFormField
+                                fieldType={FormFieldType.DATE_INPUT}
+                                control={form.control}
+                                name={`details.${index}.expiryDate`}
+                              />
+                            </td>
+                            <td className="p-1 text-center">
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => remove(index)}
+                                className="text-red-400 hover:text-red-600 h-8 w-8"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </td>
+                          </tr>
+
+                          {/* DÒNG 2: HIỂN THỊ THÔNG TIN TỰ ĐỘNG TÍNH TOÁN */}
+                          <tr className="border-b bg-slate-50/40 text-[11px]">
+                            <td
+                              colSpan={2}
+                              className="p-1 px-4 italic text-slate-400 max-w-[200px]"
+                            >
+                              <div
+                                className="truncate"
+                                title={rowData.note || ""} // Hiện tooltip khi di chuột vào
+                              >
+                                {rowData.note || "---"}
+                              </div>
+                            </td>
+                            <td colSpan={8} className="p-1 px-2">
+                              <div className="flex gap-6 text-slate-500">
+                                <div className="flex gap-1">
+                                  <span>Tiền thuế:</span>
+                                  <span className="font-medium text-slate-700">
+                                    {formatCurrency(
+                                      (rowData.vatAmount || 0) *
+                                        (rowData.quantity || 0),
+                                    )}
+                                  </span>
                                 </div>
-                                <div className="text-[10px] flex items-center gap-2 mt-1">
-                                  <span className="bg-blue-50 text-blue-600 px-1 rounded font-mono border border-blue-100">
-                                    {item.code}
+                                <div className="flex gap-1">
+                                  <span>Giá vốn (+VAT):</span>
+                                  <span className="font-medium text-slate-700">
+                                    {formatCurrency(
+                                      rowData.afterVatAmount || 0,
+                                    )}
                                   </span>
-                                  <span className="text-slate-500 italic truncate max-w-[300px]">
-                                    {item.hoatChat || "Không có hoạt chất"}
+                                </div>
+                                <div className="flex gap-1">
+                                  <span>Thành tiền dòng:</span>
+                                  <span className="font-bold text-amber-700">
+                                    {formatCurrency(rowData.lineTotal || 0)}
                                   </span>
-                                  <span className="ml-auto text-slate-400 font-medium">
-                                    ĐVT: {item.unit}
+                                </div>
+                                <div className="ml-auto flex gap-2 items-center">
+                                  <span className="text-slate-400">
+                                    Cho phép bán?
                                   </span>
+                                  <CustomFormField
+                                    fieldType={FormFieldType.CHECKBOX}
+                                    control={form.control}
+                                    name={`details.${index}.isSellable`}
+                                  />
                                 </div>
                               </div>
-                            )}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <CustomFormField
-                            fieldType={FormFieldType.SELECT}
-                            control={form.control}
-                            name={`details.${index}.unitId`}
-                          >
-                            <SelectItem value="7b2e131d-3841-4969-8086-4f40445a5555">
-                              Viên
-                            </SelectItem>
-                            <SelectItem value="hop">Hộp</SelectItem>
-                          </CustomFormField>
-                        </td>
-                        <td className="p-2">
-                          <CustomFormField
-                            fieldType={FormFieldType.NUMBER}
-                            control={form.control}
-                            name={`details.${index}.quantity`}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <CustomFormField
-                            fieldType={FormFieldType.NUMBER}
-                            control={form.control}
-                            name={`details.${index}.importPrice`}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <CustomFormField
-                            fieldType={FormFieldType.INPUT}
-                            control={form.control}
-                            name={`details.${index}.plotNumber`}
-                          />
-                        </td>
-                        <td className="p-2">
-                          <CustomFormField
-                            fieldType={FormFieldType.DATE_INPUT}
-                            control={form.control}
-                            name={`details.${index}.expiryDate`}
-                          />
-                        </td>
-                        <td className="p-2 text-center">
-                          <CustomFormField
-                            fieldType={FormFieldType.CHECKBOX}
-                            control={form.control}
-                            name={`details.${index}.isSellable`}
-                          />
-                        </td>
-                        <td className="p-2 text-center">
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => remove(index)}
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </td>
-                      </tr>
-                    ))}
+                            </td>
+                          </tr>
+                        </React.Fragment>
+                      );
+                    })}
                   </tbody>
                 </table>
               </div>
@@ -391,13 +723,15 @@ export default function PharImportOrderFormDialog({
 
             {/* PHẦN 3: FOOTER ACTION */}
             <div className="w-full p-6 border-t flex justify-end gap-3 bg-white">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => form.reset()}
-              >
-                Làm lại
-              </Button>
+              {isCreateMode && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => form.reset()}
+                >
+                  Làm lại
+                </Button>
+              )}
               <Button
                 type="button"
                 variant="outline"
@@ -405,6 +739,29 @@ export default function PharImportOrderFormDialog({
               >
                 {isViewMode ? "Đóng" : "Hủy"}
               </Button>
+
+              {isCreateMode && (
+                <HasPermission permission={AppPermission.CREATE_IMPORT_ORDER}>
+                  <Button
+                    type="submit"
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="mr-2 h-4 w-4" /> Tạo phiếu
+                  </Button>
+                </HasPermission>
+              )}
+
+              {isEditMode && (
+                <HasPermission permission={AppPermission.UPDATE_IMPORT_ORDER}>
+                  <Button
+                    type="submit"
+                    className="bg-green-600 hover:bg-green-700"
+                  >
+                    <Save className="mr-2 h-4 w-4" /> Cập nhật phiếu
+                  </Button>
+                </HasPermission>
+              )}
+
               <HasPermission permission={AppPermission.APPROVED_IMPORT_ORDER}>
                 {form.getValues("status") === PharImportStatus.PENDING && (
                   <Button
@@ -417,14 +774,6 @@ export default function PharImportOrderFormDialog({
                   </Button>
                 )}
               </HasPermission>
-              {!isViewMode && (
-                <Button
-                  type="submit"
-                  className="bg-green-600 hover:bg-green-700"
-                >
-                  <Save className="mr-2 h-4 w-4" /> Lưu phiếu
-                </Button>
-              )}
             </div>
           </form>
         </Form>

@@ -7,12 +7,14 @@ import { TabsTrigger } from "@radix-ui/react-tabs";
 import { useDashboardContext } from "@/providers/dashboard-providers";
 import { dateFormater } from "@/lib/utils";
 import EmrForm from "@/components/concultation/EmrForm";
+import { AppPermission } from "@/constants/enum";
+import { PermissionGuard } from "@/components/auth/PermissionGuard";
 
 export default function Page() {
   const { customerSelected } = useDashboardContext();
 
   return (
-    <>
+    <PermissionGuard permission={AppPermission.CONSULTATION}>
       <div className="p-4">
         <fieldset className="w-full border border-border rounded-lg p-4 bg-slate-50/50">
           <legend className="font-bold px-2 text-blue-700 uppercase text-sm">
@@ -77,6 +79,6 @@ export default function Page() {
           </TabsContent>
         </div>
       </Tabs>
-    </>
+    </PermissionGuard>
   );
 }

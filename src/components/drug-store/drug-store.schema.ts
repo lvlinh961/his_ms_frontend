@@ -2,6 +2,7 @@ import { PharImportStatus } from "@/constants/enum";
 import { getFirstDayOfMonthISOString, getTodayISOString } from "@/lib/utils";
 import { z } from "zod";
 import PharImportOrder from "./PharImportOrder";
+import page from "@/app/medicine/page";
 
 export const PharImportOrderSearchSchema = z.object({
   keyword: z.string().optional().or(z.literal("")),
@@ -60,13 +61,13 @@ export type PharImportOrderItem = z.infer<typeof PharImportOrderItemSchema>;
 
 export const PharImportDetailCreateSchema = z.object({
   // ID của thuốc/vật tư
-  drugMaterialId: z.string().min(1, "Vui lòng chọn thuốc/vật tư"),
+  drugMaterialId: z.number().min(0, "Vui lòng chọn thuốc/vật tư"),
 
   // ID của thuốc/vật tư
   drugMaterialName: z.string().optional().nullable(),
 
   // ID đơn vị tính
-  unitId: z.string().uuid("Đơn vị tính không hợp lệ"),
+  unitId: z.number().min(1, "Đơn vị tính không hợp lệ"),
 
   // Số lượng (coerce để ép kiểu từ string input sang number)
   quantity: z.coerce.number().min(0.01, "Số lượng phải lớn hơn 0"),
@@ -76,6 +77,16 @@ export const PharImportDetailCreateSchema = z.object({
 
   // % VAT (Ví dụ: 5.0)
   vatPercent: z.coerce.number().min(0).max(100).default(0),
+
+  vatAmount: z.coerce.number().min(0, "Tổng tiền thuế không hợp lệ"),
+
+  afterVatAmount: z.coerce.number().min(0, "Tổng tiền sau VAT không hợp lệ"),
+
+  // Thành tiền sau thuế
+  lineTotal: z.coerce.number().min(0, "Giá nhập không được âm"),
+
+  // % Phần trăm tăng giá (Ví dụ: 5.0)
+  markupPercent: z.coerce.number().min(0).max(100).default(0),
 
   // Giá bán dự kiến
   sellPrice: z.coerce.number().min(0, "Giá bán không được âm"),
@@ -132,7 +143,17 @@ export const PharImportCreateSchema = z.object({
 
   // Thông tin bổ sung & Tài chính
   note: z.string().optional().nullable(),
+  // % VAT (Ví dụ: 5.0)
+  vatPercent: z.coerce.number().min(0).max(100).default(0),
+  // % VAT (Ví dụ: 5.0)
+  markupPercent: z.coerce.number().min(0).max(100).default(0),
   discountAmount: z.coerce.number().min(0).default(0),
+
+  // --- Các trường tổng hợp tài chính ---
+  subTotal: z.coerce.number().default(0), // Tổng tiền hàng chưa thuế
+  vatAmount: z.coerce.number().default(0), // Tổng tiền thuế toàn phiếu
+  totalAfterVat: z.coerce.number().default(0), // Tổng tiền sau thuế (trước chiết khấu)
+  totalAmount: z.coerce.number().default(0),
 
   // Danh sách chi tiết (min 1 phần tử)
   details: z
@@ -162,14 +183,21 @@ export const pharImportDefaultValues: Partial<PharImportCreateRequest> = {
   note: "",
   discountAmount: 0,
 
+  subTotal: 0, // Tổng tiền hàng chưa thuế
+  vatAmount: 0, // Tổng tiền thuế toàn phiếu
+  totalAfterVat: 0, // Tổng tiền sau thuế (trước chiết khấu)
+  totalAmount: 0, // Tổng tiền cuối cùng
+
   // Danh sách chi tiết (Khởi tạo sẵn 1 dòng trống để User dễ nhập liệu)
   details: [
     {
-      drugMaterialId: "",
-      unitId: "",
+      drugMaterialId: 0,
+      unitId: 0,
       quantity: 1,
       importPrice: 0,
       vatPercent: 5, // Thuế suất dược phẩm phổ biến là 5%
+      lineTotal: 0,
+      markupPercent: 0,
       sellPrice: 0,
       plotNumber: "",
       expiryDate: "", // Để trống bắt buộc user chọn
@@ -186,7 +214,8 @@ export const DrugSuggestSchema = z.object({
   name: z.string(),
   hoatChat: z.string().optional().nullable(),
   hamLuong: z.string().optional().nullable(),
-  unit: z.string().optional().nullable(),
+  unitId: z.number().optional().nullable(),
+  unitName: z.string().optional().nullable(),
   manufacturer: z.string().optional().nullable(),
   dongGoi: z.string().optional().nullable(),
   displayLabel: z.string(),
@@ -204,6 +233,12 @@ export interface SearchStoreResponse {
   name: string;
   code: string;
   location: string | null;
+}
+
+export interface SearchSupplierResponse {
+  id: string;
+  name: string;
+  code: string;
 }
 
 export const ApprovePharImportOrderSchema = z.object({
@@ -226,7 +261,12 @@ export const DrugStockSuggestSchema = z.object({
   code: z.string(),
   name: z.string(),
   hoatChat: z.string().nullable().optional(),
-  unit: z.string(),
+  unitId: z.string(),
+  unitName: z.string(),
+  usageUnitId: z.string(),
+  usageUnitName: z.string(),
+  usageId: z.string(),
+  usageName: z.string(),
   // Sử dụng coerce để tự động ép kiểu từ string sang number nếu cần
   availableQuantity: z.number().default(0),
   sellPrice: z.number().default(0),
@@ -326,3 +366,85 @@ export const PharInvoiceResponseSchema = z.object({
 
 // Type định nghĩa cho kết quả trả về
 export type PharInvoiceResponse = z.infer<typeof PharInvoiceResponseSchema>;
+
+export const DrugStoreFilterSchema = z.object({
+  keyword: z.string().optional().default(""),
+  active: z.string().optional().default("all"),
+  page: z.number().default(0),
+  size: z.number().min(1).max(100).default(20),
+});
+
+export type DrugStoreFilter = z.infer<typeof DrugStoreFilterSchema>;
+
+// Schema cho dữ liệu từ API
+export const DrugStoreSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().min(1, "Tên kho không được để trống"),
+  code: z.string().min(1, "Mã kho không được để trống"),
+  location: z.string().nullable().optional(),
+  active: z.boolean().default(true),
+  createdAt: z.string(),
+  createdBy: z.string(),
+});
+
+export type DrugStore = z.infer<typeof DrugStoreSchema>;
+
+// Schema dành cho Form Create/Update
+export const StoreFormSchema = DrugStoreSchema.pick({
+  name: true,
+  code: true,
+  location: true,
+  active: true,
+});
+
+export type StoreFormValues = z.infer<typeof StoreFormSchema>;
+
+export const DrugStoreRequestSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z
+    .string()
+    .min(1, "Tên kho không được để trống")
+    .max(100, "Tên kho không được vượt quá 100 ký tự"),
+  code: z
+    .string()
+    .min(1, "Mã kho không được để trống")
+    .max(20, "Mã kho không được vượt quá 20 ký tự")
+    // Thêm regex nếu bạn muốn mã kho không chứa khoảng trắng/ký tự đặc biệt
+    .regex(/^[a-zA-Z0-9_-]+$/, "Mã kho chỉ bao gồm chữ, số, dấu gạch ngang"),
+  location: z
+    .string()
+    .max(255, "Địa chỉ không được vượt quá 255 ký tự")
+    .optional()
+    .or(z.literal("")),
+  active: z.boolean().default(true),
+});
+
+export type DrugStoreRequest = z.infer<typeof DrugStoreRequestSchema>;
+
+export const DrugSupplierSchema = z.object({
+  id: z.string().uuid().optional(),
+  name: z.string().min(1, "Tên nhà cung cấp không được để trống"),
+  code: z.string().min(1, "Mã nhà cung cấp không được để trống"),
+  phone: z.string().optional().nullable(),
+  email: z
+    .string()
+    .email("Email không đúng định dạng")
+    .optional()
+    .nullable()
+    .or(z.literal("")),
+  taxCode: z.string().optional().nullable(),
+  address: z.string().optional().nullable(),
+  active: z.boolean().default(true),
+});
+
+export type DrugSupplier = z.infer<typeof DrugSupplierSchema>;
+
+// Schema cho bộ lọc (Filter)
+export const SupplierFilterSchema = z.object({
+  keyword: z.string().optional().default(""),
+  active: z.string().default("all"),
+  page: z.number().default(0),
+  size: z.number().min(1).max(100).default(20),
+});
+
+export type SupplierFilterValues = z.infer<typeof SupplierFilterSchema>;
